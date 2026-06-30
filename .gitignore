@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.log
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+.env
+backend/.env
+firebase-service-account*.json
+*serviceAccountKey.json
+
+.agents/
+.npm-cache/
+dist-smoke/
