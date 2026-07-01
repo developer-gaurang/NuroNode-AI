@@ -10,15 +10,19 @@ router = APIRouter()
 
 @router.post("/send")
 async def send_sos(request: SosSendRequest, user: CurrentUser = Depends(get_current_user)):
-    return SosService().send_sos(user.uid, request)
+    return await SosService().send_sos(user.uid, request)
 
 
 @router.post("/test")
 async def test_sos(request: SosSendRequest, user: CurrentUser = Depends(get_current_user)):
-    return SosService().send_sos(user.uid, request, test_mode=True)
+    return await SosService().send_sos(user.uid, request)
 
 
 @router.post("/history")
 async def sos_history(user: CurrentUser = Depends(get_current_user)):
     return {"events": SosService().history(user.uid)}
 
+
+@router.get("/history")
+async def get_sos_history(user: CurrentUser = Depends(get_current_user)):
+    return {"events": SosService().history(user.uid)}

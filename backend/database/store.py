@@ -76,7 +76,14 @@ class FirestoreStore(BaseStore):
 
     def get_patient(self, uid: str, patient_id: str) -> dict | None:
         snap = self._subdoc(uid, "patients", patient_id).get()
-        return snap.to_dict() if snap.exists else None
+        if snap.exists:
+            return snap.to_dict()
+        if patient_id in {"primary", uid}:
+            profile_snap = self._user_doc(uid).collection("profile").document("current").get()
+            if profile_snap.exists:
+                profile = profile_snap.to_dict()
+                return {**profile, "id": profile.get("id") or uid, "owner_uid": uid}
+        return None
 
     def get_public_patient(self, patient_id: str) -> dict | None:
         snap = self.db.collection("public_medical_profiles").document(patient_id).get()

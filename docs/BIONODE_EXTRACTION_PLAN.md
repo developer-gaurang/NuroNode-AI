@@ -81,7 +81,7 @@ Add only if Phase A is stable.
    - Could mirror Nurosync clinical report sections.
 
 3. **Emergency Contact Draft Message**
-   - Generate copyable SMS/WhatsApp-style message with session facts.
+   - Generate copyable emergency summary with session facts.
    - Safer than automatic notification during hackathon.
 
 4. **Simple Health Vault**
@@ -137,4 +137,3 @@ It should not contribute:
 - fake sensor systems
 - unproven medical claims
 - cloud auth/security complexity
-

@@ -36,13 +36,38 @@ Caregiver question:
             from google import genai
 
             client = genai.Client(api_key=settings.gemini_api_key)
-            response = client.models.generate_content(model=settings.gemini_model, contents=prompt)
-            text = response.text or ""
-            if not text.strip():
-                raise RuntimeError("Gemini returned an empty response.")
-            return AiSummaryResponse(provider=settings.gemini_model, summary=text)
+            attempted_models = []
+            model_candidates = [settings.gemini_model, "gemini-2.5-flash", "gemini-2.0-flash"]
+            last_error: Exception | None = None
+
+            for model in dict.fromkeys(item for item in model_candidates if item):
+                attempted_models.append(model)
+                try:
+                    response = client.models.generate_content(model=model, contents=prompt)
+                    text = self._extract_text(response)
+                    if not text.strip():
+                        raise RuntimeError("Gemini returned an empty response.")
+                    return AiSummaryResponse(provider=model, summary=text)
+                except Exception as exc:
+                    last_error = exc
+
+            raise RuntimeError(f"Gemini request failed for models {', '.join(attempted_models)}: {last_error}")
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"Gemini request failed: {exc}",
             ) from exc
+
+    @staticmethod
+    def _extract_text(response) -> str:
+        try:
+            return response.text or ""
+        except Exception:
+            parts = []
+            for candidate in getattr(response, "candidates", []) or []:
+                content = getattr(candidate, "content", None)
+                for part in getattr(content, "parts", []) or []:
+                    text = getattr(part, "text", "")
+                    if text:
+                        parts.append(text)
+            return "\n".join(parts)

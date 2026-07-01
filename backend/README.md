@@ -1,6 +1,6 @@
 # NuroNode AI Backend
 
-FastAPI backend for NuroNode AI. This service is the server-side control plane for authentication, Firestore persistence, Twilio SOS delivery, Gemini AI requests, report generation, Nurosync telemetry, and future ESP8266 automation.
+FastAPI backend for NuroNode AI. This service is the server-side control plane for authentication, Firestore persistence, SOS event records, Gemini AI requests, report generation, Nurosync telemetry, and future ESP8266 automation.
 
 ## Run
 
@@ -24,12 +24,9 @@ Required for production:
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_FILE`
 - `FIREBASE_WEB_API_KEY`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_FROM_NUMBER`
 - `GEMINI_API_KEY`
 
-Never expose the Twilio auth token, Firebase service account, or Gemini key to React.
+Never expose the Firebase service account or Gemini key to React.
 
 ## User Data Isolation
 
@@ -78,4 +75,3 @@ This keeps private account data user-scoped while still allowing emergency QR sc
 ## Nurosync Boundary
 
 This backend does not replace Nurosync blink detection, calibration, serial communication, or firmware protocol. It records telemetry, validates API access, and prepares command payloads while the existing Nurosync engine remains responsible for hardware behavior.
-

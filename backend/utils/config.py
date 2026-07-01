@@ -26,16 +26,13 @@ class Settings:
         self.firebase_service_account_file = os.getenv("FIREBASE_SERVICE_ACCOUNT_FILE", "")
         self.firebase_web_api_key = os.getenv("FIREBASE_WEB_API_KEY", "")
         self.session_cookie_name = os.getenv("SESSION_COOKIE_NAME", "nuronode_session")
-        self.twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
-        self.twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN", "")
-        self.twilio_from_number = os.getenv("TWILIO_FROM_NUMBER", "")
         self.gemini_api_key = (
             os.getenv("GEMINI_API_KEY")
             or os.getenv("GOOGLE_API_KEY")
             or os.getenv("GOOGLE_GEMINI_API_KEY")
             or ""
         )
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
     @property
     def cors_origins(self) -> list[str]:

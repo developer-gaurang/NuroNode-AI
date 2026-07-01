@@ -11,7 +11,7 @@ from backend.utils.config import settings
 def create_app() -> FastAPI:
     app = FastAPI(
         title="NuroNode AI Backend",
-        description="Secure backend brain for Firebase auth, Firestore, Twilio SOS, Gemini AI, Nurosync, and automation APIs.",
+        description="Secure backend brain for Firebase auth, Firestore SOS records, Gemini AI, Nurosync, and automation APIs.",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",

@@ -83,7 +83,7 @@ Version 2 can expand after the hackathon once the core demo is stable.
 - Proper authentication.
 - Caregiver account and remote dashboard.
 - Emergency contacts with explicit consent.
-- SMS/WhatsApp/email share flows.
+- External message and email share flows.
 - PDF report generation.
 - QR emergency summary.
 - Health vault with allergies, diagnosis, prescriptions, and caregiver notes.
@@ -134,4 +134,3 @@ This is focused, believable, and valuable.
 ## Product Definition Statement
 
 NuroNode AI is the care layer for eye-controlled mobility. It does not replace Nurosync; it productizes it. The platform helps a patient control movement through eye signals while giving caregivers and clinicians transparent evidence of signal quality, command intent, emergency events, and session outcomes.
-

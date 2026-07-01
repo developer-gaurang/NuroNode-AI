@@ -24,7 +24,20 @@ class AutomationService:
         )
 
     def command(self, uid: str, request: AutomationCommandRequest) -> dict:
-        allowed = {"LIGHT_ON", "LIGHT_OFF", "FAN_ON", "FAN_OFF", "RELAY_ON", "RELAY_OFF", "STATUS"}
+        allowed = {
+            "LIGHT_ON",
+            "LIGHT_OFF",
+            "FAN_ON",
+            "FAN_OFF",
+            "RELAY_ON",
+            "RELAY_OFF",
+            "ALL_ON",
+            "ALL_OFF",
+            "STATUS",
+            "PING",
+            "STOP",
+            "EMERGENCY_STOP",
+        }
         if request.command not in allowed:
             return {"accepted": False, "reason": "Unsupported automation command"}
         return {

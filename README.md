@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python-green?style=for-the-badge&logo=fastapi" alt="FastAPI Backend" />
   <img src="https://img.shields.io/badge/Database-Firebase%20%7C%20Firestore-orange?style=for-the-badge&logo=firebase" alt="Firebase Database" />
   <img src="https://img.shields.io/badge/AI-Gemini%202.5%20Flash-violet?style=for-the-badge&logo=google-gemini" alt="Gemini AI" />
-  <img src="https://img.shields.io/badge/SOS-Twilio%20SMS-red?style=for-the-badge&logo=twilio" alt="Twilio SOS" />
+  <img src="https://img.shields.io/badge/SOS-Firestore%20Event%20Record-red?style=for-the-badge&logo=firebase" alt="SOS Event Record" />
 </p>
 
 ---
@@ -21,7 +21,7 @@ People with severe motor impairments (such as ALS, quadriplegia, or locked-in sy
 **NuroNode AI does not replace the hardware control loop—it productizes it.** It acts as a digital safety shield and communication hub, bridging the gap between raw hardware telemetry and real-world caregiving by providing:
 1. **Deterministic Eye Mobility:** Map eye blinks to directional wheelchair commands.
 2. **Clinical Signal Visualization:** High-fidelity, real-time EOG wave plotting and baseline drift diagnostics.
-3. **Emergency SOS & Twilio Alerting:** Automated GPS-linked caregiver SMS alerts when an emergency stop is triggered.
+3. **Emergency SOS Event Recording:** GPS-linked emergency events are saved to Firebase when an emergency stop is triggered.
 4. **AI-Powered Diagnostics:** Gemini-driven plain-language session interpretation and calibration advisories.
 5. **IoT Home Automation:** Trigger smart relays (lights, fans) using eye gestures.
 
@@ -74,12 +74,11 @@ graph TD
         UI -->|REST APIs & WebSockets| API[🐍 FastAPI App uvicorn]
         API -->|Isolated User Storage| Firestore[(🗄️ Firestore Database)]
         API -->|Session Summary Prompt| Gemini[🤖 Google Gemini 2.5 Flash]
-        API -->|Critical Alert Trigger| Twilio[💬 Twilio SMS Gateway]
         API -->|Local Relay Control| Relay[🔌 ESP8266 Smart Automation Relays]
     end
     
     %% Emergency Response Outbound
-    Twilio -->|Urgent SMS + Maps Link| Caregiver[👨‍⚕️ Emergency Caregivers]
+    Firestore -->|SOS Event + Maps Link| Caregiver[👨‍⚕️ Emergency Caregivers]
     Firestore -->|Sanitized Profile| QR[📲 Responder QR Medical Card]
 ```
 
@@ -96,7 +95,7 @@ graph TD
 ### 🐍 Backend (FastAPI Control Plane)
 * **Framework:** FastAPI with Uvicorn (async Python server)
 * **Security:** Firebase Admin SDK providing database rules replication and credential isolation
-* **Messaging:** Twilio REST API for routing high-priority emergency notifications
+* **SOS Records:** Firestore-backed emergency event history with GPS context
 * **AI Engine:** Google GenAI SDK for Gemini 2.5 Flash session analysis
 * **IoT Protocols:** WebSocket connections to capture serial streams and forward automation state
 
@@ -118,7 +117,7 @@ Blink events are detected natively on the headband microcontroller to avoid safe
 | **3** | `RIGHT` | Make a short pulse-turn to the right | `R` | Pulse turn, auto-stop |
 | **4** | `BACKWARD` | Reverse direction | `B` | Protected by 1.5s cooldown |
 | **5+** | `STOP` | Normal halting sequence | `S` | Instant bypass (No Cooldown) |
-| **Long (1s+)** | `EMERGENCY_STOP` | Lock brakes, trigger caregiver sirens & SOS SMS | `E` | Instant bypass + Twilio alert |
+| **Long (1s+)** | `EMERGENCY_STOP` | Lock brakes, trigger caregiver sirens & record SOS event | `E` | Instant bypass + SOS record |
 
 ---
 
@@ -128,7 +127,7 @@ Assistive mobility requires multi-tier safety guards:
 
 ### 1. The Emergency SOS Engine
 * **Detection:** Triggered by a **long blink (1s+)** or a manual click on the Emergency button.
-* **Alert Delivery:** Captures the patient's approximate GPS coordinates (via browser Geolocation) and posts a payload to the backend. The backend uses **Twilio** to immediately send an SMS to configured caregiver contacts:
+* **Event Recording:** Captures the patient's approximate GPS coordinates (via browser Geolocation), saves the SOS event in Firebase, and shows a success toast:
   > 🚨 **NuroNode Emergency Alert**  
   > Patient: Gaurang Verma  
   > Emergency detected through NuroNode AI.  
@@ -153,7 +152,7 @@ Assistive mobility requires multi-tier safety guards:
 * Python 3.9 or higher
 * Node.js v18 or higher
 * Arduino IDE (to flash ESP32 chips)
-* Google Gemini API Key, Twilio Account (SID, Token, Number), and a Firebase Project.
+* Google Gemini API Key and a Firebase Project.
 
 ### 1. Repository Setup
 Clone the repository and locate the workspace directory:
@@ -185,9 +184,6 @@ cd "E:\NuroNode AIII"
    FIREBASE_PROJECT_ID=your-firebase-project-id
    FIREBASE_WEB_API_KEY=your-firebase-web-api-key
    FIREBASE_SERVICE_ACCOUNT_JSON={"type": "service_account", ...}
-   TWILIO_ACCOUNT_SID=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-   TWILIO_AUTH_TOKEN=your_twilio_auth_token
-   TWILIO_FROM_NUMBER=+1234567890
    GEMINI_API_KEY=your_gemini_api_key
    ```
 5. Run the FastAPI development server:
@@ -224,7 +220,7 @@ When presenting to the jury, use this high-impact 3-minute sequence:
 1. **The Problem Pitch (0:00 - 0:30):** Explain how patients with severe paralysis cannot use normal joysticks. Show the Nurosync headband and explain that it reads microvolt eye signals.
 2. **Connection & Waveform (0:30 - 1:15):** Load the dashboard in Chrome, connect via **Web Serial**, and navigate to **Signal Center**. Show the live, glowing EOG waveform and trigger a blink to demonstrate the real-time microvolt spike crossing the dynamic threshold line.
 3. **Mobility Control Loop (1:15 - 2:00):** Navigate to the **Mobility Center**. Execute a **double blink** to turn left, then a **single blink** to move forward. Point out that the command history logs the source as `Headband Blink`.
-4. **Safety Trigger & Caregiver SOS (2:00 - 2:30):** Perform a **long blink (1s+)**. The dashboard immediately enters **Emergency Mode** (siren sound plays, flashing red header). Show the Twilio logs or your phone screen receiving the SMS alert with the live Google Maps coordinates of the wheelchair.
+4. **Safety Trigger & SOS Record (2:00 - 2:30):** Perform a **long blink (1s+)**. The dashboard immediately enters **Emergency Mode** and records the SOS event with the live Google Maps coordinates in Firebase.
 5. **Session Interpretation & AI (2:30 - 3:00):** Stop the session. Navigate to the **Reports + AI** tab. Click "Analyze Session". Show the clinical metrics panel, and review the Gemini AI-generated session report explaining the EOG metrics to the caregiver.
 
 ---

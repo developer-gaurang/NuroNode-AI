@@ -117,11 +117,33 @@ const emptyContact = {
   priority: 1,
 };
 
-const emptyTwilio = {
-  accountSid: '',
-  authToken: '',
-  senderNumber: '',
-};
+function normalizeSosEvent(event) {
+  const timestamp = typeof event.timestamp === 'number' ? event.timestamp : Date.parse(event.timestamp || event.createdAt || '') || Date.now();
+  const deliveries = (event.deliveries || []).map((delivery, index) => {
+    const contact = delivery.contact || {};
+    const status = delivery.status || delivery.delivery_status || 'Queued';
+    const normalizedStatus = String(status).toLowerCase();
+    return {
+      contactId: delivery.contactId || contact.id || `${contact.phone || index}`,
+      name: delivery.name || contact.name || 'Emergency Contact',
+      relationship: delivery.relationship || contact.relationship || contact.relation || 'Contact',
+      phone: delivery.phone || contact.phone || '',
+      priority: delivery.priority || contact.priority || index + 1,
+      status: normalizedStatus === 'sent' || normalizedStatus === 'delivered' ? 'Sent' : normalizedStatus === 'failed' || normalizedStatus === 'service_unavailable' ? 'Failed' : status,
+      detail: delivery.detail || delivery.failed_reason || delivery.message_id || delivery.delivery_status || 'Queued',
+      updatedAt: delivery.updatedAt || timestamp,
+    };
+  });
+
+  return {
+    ...event,
+    timestamp,
+    triggeredBy: event.triggeredBy || event.triggered_by || 'Emergency',
+    emergencyPayload: event.emergencyPayload || event.message || '',
+    resolutionStatus: event.resolutionStatus || event.resolution_status || 'Active',
+    deliveries,
+  };
+}
 
 const initialSession = {
   id: `NN-${Date.now()}`,
@@ -301,6 +323,19 @@ function buildQrPayload(patient, primaryContact) {
   return emergencyProfileUrl(patient);
 }
 
+function normalizeEmergencyContacts(values) {
+  return [...values]
+    .sort((a, b) => Number(a.priority) - Number(b.priority))
+    .filter((contact) => contact.name && contact.phone)
+    .map((contact, index) => ({
+      id: contact.id || `CONTACT-${index + 1}`,
+      name: contact.name,
+      relationship: contact.relationship || contact.relation || '',
+      phone: contact.phone,
+      priority: Number(contact.priority) || index + 1,
+    }));
+}
+
 function qrImageUrl(payload, size = 360) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&format=png&data=${encodeURIComponent(payload)}`;
 }
@@ -345,6 +380,19 @@ function StatusPill({ status, tone = 'neutral' }) {
       <span />
       {status}
     </span>
+  );
+}
+
+function ToastStack({ items, dismiss }) {
+  if (!items.length) return null;
+  return (
+    <div className="toast-stack">
+      {items.map((item) => (
+        <button className={`toast ${item.tone || 'neutral'}`} key={item.id} onClick={() => dismiss(item.id)}>
+          {item.message}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -419,7 +467,7 @@ function NuroNodeAI() {
   const [manualThreshold, setManualThreshold] = useState('');
   const [patient, setPatient] = useState(emptyPatient);
   const [contacts, setContacts] = useState([]);
-  const [twilio, setTwilio] = useState(emptyTwilio);
+  const [toasts, setToasts] = useState([]);
   const [sosEvents, setSosEvents] = useState([]);
   const [activeSosId, setActiveSosId] = useState(null);
   const [reports, setReports] = useState([]);
@@ -439,7 +487,6 @@ function NuroNodeAI() {
   const metricsRef = useRef(signalMetrics(initialSession));
   const patientRef = useRef(patient);
   const contactsRef = useRef(contacts);
-  const twilioRef = useRef(twilio);
   const sosEventsRef = useRef(sosEvents);
 
   const metrics = useMemo(() => signalMetrics(session), [session]);
@@ -461,8 +508,17 @@ function NuroNodeAI() {
   useEffect(() => { metricsRef.current = metrics; }, [metrics]);
   useEffect(() => { patientRef.current = patient; }, [patient]);
   useEffect(() => { contactsRef.current = contacts; }, [contacts]);
-  useEffect(() => { twilioRef.current = twilio; }, [twilio]);
   useEffect(() => { sosEventsRef.current = sosEvents; }, [sosEvents]);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
+  const notify = useCallback((message, tone = 'neutral') => {
+    const id = `TOAST-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [{ id, message, tone }, ...prev].slice(0, 4));
+    window.setTimeout(() => dismissToast(id), 5200);
+  }, [dismissToast]);
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
@@ -476,14 +532,12 @@ function NuroNodeAI() {
     setDataStatus('Loading secure Firebase data');
     const profileRef = doc(db, 'users', user.uid, 'profile', 'current');
     const contactsRef = collection(db, 'users', user.uid, 'emergency_contacts');
-    const settingsRef = doc(db, 'users', user.uid, 'settings', 'current');
-    const sosRef = query(collection(db, 'users', user.uid, 'sos_history'), orderBy('timestamp', 'desc'), limit(30));
+    const sosRef = query(collection(db, 'users', user.uid, 'sos_events'), orderBy('timestamp', 'desc'), limit(30));
     const reportsRef = query(collection(db, 'users', user.uid, 'reports'), orderBy('createdAt', 'desc'), limit(30));
 
-    const [profileSnap, contactsSnap, settingsSnap, sosSnap, reportsSnap] = await Promise.all([
+    const [profileSnap, contactsSnap, sosSnap, reportsSnap] = await Promise.all([
       getDoc(profileRef),
       getDocs(contactsRef),
-      getDoc(settingsRef),
       getDocs(sosRef),
       getDocs(reportsRef),
     ]);
@@ -491,9 +545,9 @@ function NuroNodeAI() {
     const cloudProfile = { ...emptyPatient, id: user.uid, ...(profileSnap.exists() ? profileSnap.data() : {}) };
     const cachedPhoto = window.localStorage.getItem(localPhotoKey(user.uid));
     setPatient({ ...cloudProfile, profilePhoto: cloudProfile.profilePhoto || cachedPhoto || '' });
-    setContacts(contactsSnap.docs.map((item) => ({ id: item.id, ...item.data() })).sort((a, b) => Number(a.priority) - Number(b.priority)));
-    setTwilio({ ...emptyTwilio, ...(settingsSnap.exists() ? settingsSnap.data().twilio || {} : {}) });
-    setSosEvents(sosSnap.docs.map((item) => ({ id: item.id, ...item.data() })));
+    const savedContacts = contactsSnap.docs.map((item) => ({ id: item.id, ...item.data() }));
+    setContacts(normalizeEmergencyContacts(savedContacts.length ? savedContacts : cloudProfile.emergencyContacts || cloudProfile.emergency_contacts || []));
+    setSosEvents(sosSnap.docs.map((item) => normalizeSosEvent({ id: item.id, ...item.data() })));
     setReports(reportsSnap.docs.map((item) => ({ id: item.id, ...item.data() })));
     setDataStatus('Firebase sync active');
   }, []);
@@ -549,96 +603,56 @@ function NuroNodeAI() {
     setAuthMessage('Logged out.');
   }, []);
 
-  const savePatientProfile = useCallback(async (profile = patient) => {
+  const savePatientProfile = useCallback(async (profile = patient, nextContacts = contactsRef.current) => {
     if (!authUser) return;
-    const payload = { ...profile, id: authUser.uid, updatedAt: Date.now() };
+    const emergencyContacts = normalizeEmergencyContacts(nextContacts);
+    const payload = { ...profile, id: authUser.uid, emergencyContacts, emergency_contacts: emergencyContacts, updatedAt: Date.now() };
     await setDoc(doc(db, 'users', authUser.uid), { email: authUser.email, updatedAt: serverTimestamp() }, { merge: true });
     await setDoc(doc(db, 'users', authUser.uid, 'profile', 'current'), payload, { merge: true });
     await setDoc(doc(db, 'public_medical_profiles', authUser.uid), {
       ...payload,
-      emergency_contacts: contacts,
       owner_uid: authUser.uid,
       updatedAt: serverTimestamp(),
     }, { merge: true });
     setPatient(payload);
     setDataStatus('Patient profile saved to Firestore');
-  }, [authUser, contacts, patient]);
+    notify('Patient profile saved.', 'success');
+  }, [authUser, notify, patient]);
 
-  const saveTwilioSettings = useCallback(async (nextTwilio) => {
-    if (!authUser) return;
-    await setDoc(doc(db, 'users', authUser.uid, 'settings', 'current'), { twilio: nextTwilio, updatedAt: serverTimestamp() }, { merge: true });
-  }, [authUser]);
-
-  const updateDelivery = useCallback((eventId, contactId, patch) => {
-    setSosEvents((prev) => prev.map((event) => {
-      if (event.id !== eventId) return event;
-      return {
-        ...event,
-        deliveries: event.deliveries.map((delivery) => (
-          delivery.contactId === contactId ? { ...delivery, ...patch } : delivery
-        )),
-      };
-    }));
+  const localEmergencyMessage = useCallback((currentPatient, currentSession, currentMetrics, mapsUrl, now) => {
+    return [
+      '🚨 NeuroNode AI Emergency Alert',
+      '',
+      'Patient:',
+      currentPatient.fullName || 'Not provided',
+      '',
+      'Emergency detected.',
+      '',
+      'Status',
+      '',
+      `Stress Level:\n${currentMetrics.quality}`,
+      '',
+      `Blink:\n${currentSession.blinks}`,
+      '',
+      'Heart Rate:\nUnknown',
+      '',
+      'Battery:\nUnknown',
+      '',
+      `Time:\n${formatDateTime(now)}`,
+      '',
+      `Location:\n${mapsUrl}`,
+      '',
+      'Please reach immediately.',
+      '',
+      'Generated by NeuroNode AI',
+    ].join('\n');
   }, []);
-
-  const sendSmsViaTwilio = useCallback(async (eventId, contact, message) => {
-    const cfg = twilioRef.current;
-    if (!cfg.accountSid || !cfg.authToken || !cfg.senderNumber) {
-      updateDelivery(eventId, contact.id, {
-        status: 'Failed',
-        detail: 'Twilio configuration missing',
-        updatedAt: Date.now(),
-      });
-      return;
-    }
-
-    try {
-      updateDelivery(eventId, contact.id, { status: 'Pending', detail: 'Submitting to Twilio', updatedAt: Date.now() });
-      const body = new URLSearchParams({
-        To: contact.phone,
-        From: cfg.senderNumber,
-        Body: message,
-      });
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${btoa(`${cfg.accountSid}:${cfg.authToken}`)}`,
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body,
-      });
-      const payload = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        updateDelivery(eventId, contact.id, {
-          status: 'Failed',
-          detail: payload.message || `Twilio HTTP ${response.status}`,
-          updatedAt: Date.now(),
-        });
-        return;
-      }
-
-      updateDelivery(eventId, contact.id, {
-        status: payload.status === 'delivered' ? 'Delivered' : 'Sent',
-        detail: payload.sid || 'Submitted to Twilio',
-        twilioSid: payload.sid,
-        updatedAt: Date.now(),
-      });
-    } catch (error) {
-      updateDelivery(eventId, contact.id, {
-        status: 'Failed',
-        detail: error.message,
-        updatedAt: Date.now(),
-      });
-    }
-  }, [updateDelivery]);
 
   const triggerSos = useCallback(async (triggeredBy) => {
     const now = Date.now();
     const currentSession = sessionRef.current;
     const currentMetrics = metricsRef.current;
     const currentPatient = patientRef.current;
-    const orderedContacts = [...contactsRef.current].sort((a, b) => Number(a.priority) - Number(b.priority));
     const eventId = `SOS-${now}`;
     const signalSnapshot = {
       raw: currentSession.raw.slice(-60),
@@ -666,17 +680,7 @@ function NuroNodeAI() {
     const lat = coords?.coords?.latitude ?? null;
     const lon = coords?.coords?.longitude ?? null;
     const mapsUrl = lat != null && lon != null ? `https://maps.google.com/?q=${lat},${lon}` : 'Location unavailable';
-    const message = [
-      'NuroNode Emergency Alert',
-      '',
-      `Patient: ${currentPatient.fullName || 'Not provided'}`,
-      'Emergency detected through NuroNode AI.',
-      `Triggered By: ${triggeredBy}`,
-      `Time: ${new Date(now).toLocaleTimeString('en-US', { hour12: false })}`,
-      `Location: ${mapsUrl}`,
-      '',
-      'Please contact immediately.',
-    ].join('\n');
+    const message = localEmergencyMessage(currentPatient, currentSession, currentMetrics, mapsUrl, now);
 
     const event = {
       id: eventId,
@@ -697,16 +701,7 @@ function NuroNodeAI() {
       signalSnapshot,
       location: { lat, lon, mapsUrl, status: locationStatus },
       emergencyPayload: message,
-      deliveries: orderedContacts.map((contact) => ({
-        contactId: contact.id,
-        name: contact.name,
-        relationship: contact.relationship,
-        phone: contact.phone,
-        priority: contact.priority,
-        status: 'Pending',
-        detail: 'Queued',
-        updatedAt: now,
-      })),
+      deliveries: [],
       resolutionStatus: 'Active',
     };
 
@@ -715,21 +710,14 @@ function NuroNodeAI() {
     setActiveScreen('home');
     addLog(`SOS event created from ${triggeredBy}.`, 'danger');
     if (authUser) {
-      await setDoc(doc(db, 'users', authUser.uid, 'sos_history', eventId), {
+      await setDoc(doc(db, 'users', authUser.uid, 'sos_events', eventId), {
         ...event,
         createdAt: serverTimestamp(),
       }, { merge: true });
     }
 
-    if (!orderedContacts.length) {
-      updateDelivery(eventId, 'no-contact', { status: 'Failed', detail: 'No contacts configured' });
-      return;
-    }
-
-    orderedContacts.forEach((contact) => {
-      sendSmsViaTwilio(eventId, contact, message);
-    });
-  }, [addLog, authUser, sendSmsViaTwilio, updateDelivery]);
+    notify('SOS Event Recorded Successfully', 'success');
+  }, [addLog, authUser, localEmergencyMessage, notify]);
 
   const applyParsedLine = useCallback((line) => {
     const parsed = parseNurosyncLine(line);
@@ -810,6 +798,7 @@ function NuroNodeAI() {
     });
 
     if (parsed.type === 'command') addLog(`RX Command: ${parsed.command}`, parsed.command === 'EMERGENCY_STOP' ? 'danger' : 'success');
+    if (parsed.type === 'blink-executed' && parsed.count === 3) triggerSos('Triple Blink');
     if (parsed.type === 'parse-error') addLog(`Unparsed firmware line: ${parsed.line}`, 'warning');
     if (parsed.type === 'calibration-log') addLog(parsed.label, 'system');
     if (parsed.type === 'system') setHeadbandStatus(parsed.label);
@@ -834,10 +823,18 @@ function NuroNodeAI() {
     } catch (err) {
       addLog(`Serial link closed: ${err.message}`, 'warning');
     } finally {
-      setIsConnected(false);
-      setConnectionState('OFFLINE');
-      setReader(null);
-      readerRef.current = null;
+      try {
+        portReader.releaseLock();
+      } catch (error) {
+        addLog(`Serial reader release warning: ${error.message}`, 'warning');
+      }
+      if (readerRef.current === portReader) {
+        setIsConnected(false);
+        setConnectionState('OFFLINE');
+        setReader(null);
+        readerRef.current = null;
+        if (serialPortRef.current === port) serialPortRef.current = null;
+      }
     }
   }, [addLog, applyParsedLine]);
 
@@ -1011,21 +1008,27 @@ function NuroNodeAI() {
       priority: Number(contact.priority) || contacts.length + 1,
     };
     if (!clean.name || !clean.phone) return;
+    let nextContacts = [];
     setContacts((prev) => {
       const next = prev.some((item) => item.id === clean.id)
         ? prev.map((item) => (item.id === clean.id ? clean : item))
         : [...prev, clean];
-      return next.sort((a, b) => Number(a.priority) - Number(b.priority));
+      nextContacts = next.sort((a, b) => Number(a.priority) - Number(b.priority));
+      return nextContacts;
     });
     await setDoc(doc(db, 'users', authUser.uid, 'emergency_contacts', clean.id), clean, { merge: true });
-    await savePatientProfile({ ...patientRef.current });
+    await savePatientProfile({ ...patientRef.current }, nextContacts);
   }, [authUser, contacts.length, savePatientProfile]);
 
   const deleteContact = useCallback(async (id) => {
     if (!authUser) return;
-    setContacts((prev) => prev.filter((item) => item.id !== id).map((item, index) => ({ ...item, priority: index + 1 })));
+    let nextContacts = [];
+    setContacts((prev) => {
+      nextContacts = prev.filter((item) => item.id !== id).map((item, index) => ({ ...item, priority: index + 1 }));
+      return nextContacts;
+    });
     await deleteDoc(doc(db, 'users', authUser.uid, 'emergency_contacts', id));
-    await savePatientProfile({ ...patientRef.current });
+    await savePatientProfile({ ...patientRef.current }, nextContacts);
   }, [authUser, savePatientProfile]);
 
   const moveContact = useCallback(async (id, direction) => {
@@ -1041,15 +1044,8 @@ function NuroNodeAI() {
       return nextContacts;
     });
     await Promise.all(nextContacts.map((contact) => setDoc(doc(db, 'users', authUser.uid, 'emergency_contacts', contact.id), contact, { merge: true })));
-  }, [authUser]);
-
-  const updateTwilio = useCallback((name, value) => {
-    setTwilio((prev) => {
-      const next = { ...prev, [name]: value };
-      saveTwilioSettings(next).catch((error) => setDataStatus(`Settings save failed: ${error.message}`));
-      return next;
-    });
-  }, [saveTwilioSettings]);
+    await savePatientProfile({ ...patientRef.current }, nextContacts);
+  }, [authUser, savePatientProfile]);
 
   const buildReportPayload = useCallback(() => {
     const endedAt = Date.now();
@@ -1291,6 +1287,7 @@ function NuroNodeAI() {
 
   return (
     <div className={`app-shell ${drawerOpen ? 'drawer-expanded' : 'drawer-collapsed'}`}>
+      <ToastStack items={toasts} dismiss={dismissToast} />
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">NN</div>
@@ -1421,8 +1418,6 @@ function NuroNodeAI() {
             saveContact={saveContact}
             deleteContact={deleteContact}
             moveContact={moveContact}
-            twilio={twilio}
-            updateTwilio={updateTwilio}
             sosEvents={sosEvents}
             activeSos={activeSos}
             setActiveSosId={setActiveSosId}
@@ -1685,8 +1680,6 @@ function PatientHub({
   saveContact,
   deleteContact,
   moveContact,
-  twilio,
-  updateTwilio,
   sosEvents,
   activeSos,
   setActiveSosId,
@@ -1727,8 +1720,6 @@ function PatientHub({
           triggerManualEmergency={triggerManualEmergency}
           resolveSos={resolveSos}
           contacts={contacts}
-          twilio={twilio}
-          updateTwilio={updateTwilio}
         />
       )}
       {activeTab === 'qr' && (
@@ -1792,21 +1783,33 @@ function PatientProfilePanel({ patient, updatePatient, updatePatientPhoto, saveP
 function EmergencyContactsPanel({ contacts, saveContact, deleteContact, moveContact }) {
   const [draft, setDraft] = useState(emptyContact);
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const requiredRoles = ['Emergency Contact 1', 'Emergency Contact 2', 'Doctor', 'Hospital'];
 
-  const submit = () => {
-    saveContact({ ...draft, id: editingId });
-    setDraft(emptyContact);
-    setEditingId(null);
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await saveContact({ ...draft, id: editingId });
+      setDraft(emptyContact);
+      setEditingId(null);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Panel title="Emergency Contacts" right={<StatusPill status={`${contacts.length} contacts`} tone={contacts.length ? 'success' : 'warning'} />}>
+      <div className="required-contact-strip">
+        {requiredRoles.map((role) => (
+          <span key={role}>{role}</span>
+        ))}
+      </div>
       <div className="contact-form">
         <Field label="Name" name="name" value={draft.name} onChange={(name, value) => setDraft((prev) => ({ ...prev, [name]: value }))} />
         <Field label="Relationship" name="relationship" value={draft.relationship} onChange={(name, value) => setDraft((prev) => ({ ...prev, [name]: value }))} />
         <Field label="Phone Number" name="phone" value={draft.phone} onChange={(name, value) => setDraft((prev) => ({ ...prev, [name]: value }))} />
         <Field label="Priority Level" name="priority" value={draft.priority} onChange={(name, value) => setDraft((prev) => ({ ...prev, [name]: value }))} type="number" />
-        <button className="primary-action wide" onClick={submit}>{editingId ? 'Update Contact' : 'Add Contact'}</button>
+        <button className="primary-action wide" disabled={saving} onClick={submit}>{saving ? 'Saving...' : editingId ? 'Update Contact' : 'Add Contact'}</button>
       </div>
       <div className="contact-list">
         {[...contacts].sort((a, b) => Number(a.priority) - Number(b.priority)).map((contact) => (
@@ -1828,7 +1831,7 @@ function EmergencyContactsPanel({ contacts, saveContact, deleteContact, moveCont
   );
 }
 
-function SosCenter({ activeSos, sosEvents, setActiveSosId, triggerManualEmergency, resolveSos, contacts, twilio, updateTwilio }) {
+function SosCenter({ activeSos, sosEvents, setActiveSosId, triggerManualEmergency, resolveSos, contacts }) {
   const deliveryTone = activeSos?.deliveries?.some((item) => item.status === 'Failed') ? 'danger' : activeSos ? 'success' : 'neutral';
   return (
     <Panel
@@ -1860,47 +1863,28 @@ function SosCenter({ activeSos, sosEvents, setActiveSosId, triggerManualEmergenc
         </div>
 
         <div className="delivery-board">
-          <h3>SMS Delivery Status</h3>
-          {activeSos?.deliveries?.length ? activeSos.deliveries.map((delivery) => (
-            <div className="delivery-row" key={delivery.contactId}>
-              <div>
-                <strong>{delivery.name}</strong>
-                <span>{delivery.relationship} / {delivery.phone}</span>
-              </div>
-              <StatusPill status={delivery.status} tone={delivery.status === 'Failed' ? 'danger' : delivery.status === 'Sent' || delivery.status === 'Delivered' ? 'success' : 'warning'} />
-              <small>{delivery.detail}</small>
-            </div>
-          )) : <div className="empty-list">SOS delivery history appears after a trigger.</div>}
-        </div>
-      </div>
-
-      <div className="two-column compact-top">
-        <TwilioConfig twilio={twilio} updateTwilio={updateTwilio} />
-        <div>
-          <h3>Emergency History</h3>
-          <div className="event-list">
-            {sosEvents.length ? sosEvents.map((event) => (
-              <button className="history-button" key={event.id} onClick={() => setActiveSosId(event.id)}>
-                <strong>{event.triggeredBy}</strong>
-                <span>{formatDateTime(event.timestamp)} / {event.resolutionStatus}</span>
-              </button>
-            )) : <div className="empty-list">No emergency history yet.</div>}
+          <h3>SOS Event Record</h3>
+          <div className="stat-list">
+            <Stat label="Firebase Status" value={activeSos ? 'Recorded' : 'Waiting'} />
+            <Stat label="Event ID" value={activeSos?.id || 'Not created'} />
+            <Stat label="Emergency Contacts" value={`${contacts.length} configured`} />
+            <Stat label="Delivery" value="Message sending disabled" />
           </div>
         </div>
       </div>
-    </Panel>
-  );
-}
 
-function TwilioConfig({ twilio, updateTwilio }) {
-  return (
-    <div className="twilio-config">
-      <h3>Twilio Configuration</h3>
-      <Field label="Account SID" name="accountSid" value={twilio.accountSid} onChange={updateTwilio} />
-      <Field label="Auth Token" name="authToken" value={twilio.authToken} onChange={updateTwilio} type="password" />
-      <Field label="Sender Number" name="senderNumber" value={twilio.senderNumber} onChange={updateTwilio} />
-      <p className="quiet-note">Credentials sync to the authenticated Firebase settings document.</p>
-    </div>
+      <div className="compact-top">
+        <h3>Emergency History</h3>
+        <div className="event-list">
+          {sosEvents.length ? sosEvents.map((event) => (
+            <button className="history-button" key={event.id} onClick={() => setActiveSosId(event.id)}>
+              <strong>{event.triggeredBy}</strong>
+              <span>{formatDateTime(event.timestamp)} / {event.resolutionStatus}</span>
+            </button>
+          )) : <div className="empty-list">No emergency history yet.</div>}
+        </div>
+      </div>
+    </Panel>
   );
 }
 
