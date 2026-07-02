@@ -23,8 +23,12 @@ class ReportService:
             "emergency_events": session["emergency_events"],
             "reliability_score": session["reliability_score"],
             "signal_quality": session["signal_quality"],
+            "wellness_summary": session.get("wellness_summary", {}),
+            "wellness_timeline": session.get("wellness_timeline", []),
             "doctor_notes": session["doctor_notes"],
             "recommendations": session["recommendations"],
+            "disclaimer": "These values are experimental wellness indicators based on eye movement (EOG) signals and are not intended for medical diagnosis.",
+            "footer": "NeuroNode AI | Powered by Oryen Dynamics",
         }
 
     def as_json_bytes(self, payload: dict) -> bytes:
@@ -56,17 +60,51 @@ class ReportService:
         pdf = canvas.Canvas(buffer, pagesize=letter)
         width, height = letter
         y = height - 54
-        pdf.setFont("Helvetica-Bold", 16)
-        pdf.drawString(54, y, "NuroNode AI Nurosync Clinical Report")
-        y -= 28
-        pdf.setFont("Helvetica", 10)
-        for line in json.dumps(payload, indent=2, default=str).splitlines():
-            if y < 54:
+        pdf.setFont("Helvetica-Bold", 18)
+        pdf.drawString(54, y, "NeuroNode AI Wellness Report")
+        y -= 16
+        pdf.setFont("Helvetica", 9)
+        pdf.drawString(54, y, "Powered by Oryen Dynamics")
+        y -= 26
+
+        def draw_section(title: str, value: Any) -> None:
+            nonlocal y
+            if y < 90:
                 pdf.showPage()
-                pdf.setFont("Helvetica", 10)
                 y = height - 54
-            pdf.drawString(54, y, line[:105])
-            y -= 13
+            pdf.setFont("Helvetica-Bold", 12)
+            pdf.drawString(54, y, title)
+            y -= 16
+            pdf.setFont("Helvetica", 9)
+            lines = json.dumps(value, indent=2, default=str).splitlines() if not isinstance(value, str) else value.splitlines()
+            for line in lines:
+                if y < 70:
+                    pdf.showPage()
+                    y = height - 54
+                    pdf.setFont("Helvetica", 9)
+                pdf.drawString(64, y, line[:100])
+                y -= 11
+            y -= 8
+
+        draw_section("Patient Information", payload.get("patient", {}))
+        draw_section("Session Information", payload.get("session", {}))
+        draw_section("Signal Analysis", {
+            "signal_graph_summary": payload.get("signal_graph_summary", {}),
+            "blink_statistics": payload.get("blink_statistics", {}),
+            "reliability_score": payload.get("reliability_score"),
+            "signal_quality": payload.get("signal_quality"),
+        })
+        draw_section("Wellness Insights", payload.get("wellness_summary", {}))
+        draw_section("Charts", payload.get("wellness_timeline", [])[:12])
+        draw_section("Recommendations", payload.get("recommendations", []))
+        draw_section("Disclaimer", payload.get("disclaimer", ""))
+        if y < 80:
+            pdf.showPage()
+            y = height - 54
+        pdf.setFont("Helvetica-Bold", 10)
+        pdf.drawString(54, 42, "NeuroNode AI")
+        pdf.setFont("Helvetica", 9)
+        pdf.drawRightString(width - 54, 42, "Powered by Oryen Dynamics")
         pdf.save()
         buffer.seek(0)
         return buffer.read()
@@ -83,4 +121,3 @@ class ReportService:
             + f"5 0 obj << /Length {len(stream)} >> stream\n{stream}\nendstream endobj\n".encode("utf-8")
             + b"xref\n0 6\n0000000000 65535 f \ntrailer << /Root 1 0 R /Size 6 >>\nstartxref\n0\n%%EOF"
         )
-

@@ -433,6 +433,10 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
 }
 
+.metric-grid.wellness-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
 .metric-card {
   min-height: 132px;
   padding: 18px;
@@ -527,6 +531,21 @@ h1 {
   border-radius: 14px;
   padding: 10px;
   background: radial-gradient(circle at 50% 0%, rgba(0, 212, 255, 0.09), transparent 45%), rgba(5, 8, 22, 0.32);
+}
+
+.chart-wrap.wellness-chart {
+  height: 260px;
+}
+
+.wellness-disclaimer {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245, 158, 11, 0.26);
+  border-radius: 12px;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .empty-chart,
@@ -1152,6 +1171,16 @@ a.danger-action {
 
 .report-preview ul {
   margin-bottom: 0;
+}
+
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 2px solid #0f172a;
+  color: #0f172a;
 }
 
 .calibration-block {

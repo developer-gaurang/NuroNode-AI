@@ -41,6 +41,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, 
 const MAX_POINTS = 220;
 const QR_VERSION = 'NURONODE-MEDCARD-V1';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const WELLNESS_DISCLAIMER = 'These values are experimental wellness indicators based on eye movement (EOG) signals and are not intended for medical diagnosis.';
 
 const COMMANDS = {
   F: 'FORWARD',
@@ -157,6 +158,8 @@ const initialSession = {
   parseErrors: 0,
   packets: 0,
   blinks: 0,
+  blinkDurations: [],
+  activeBlinkStartedAt: null,
   blinkSequences: [],
   lastCommand: 'STOP',
   currentBlinkSequence: 0,
@@ -247,6 +250,11 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+function average(values) {
+  if (!values.length) return 0;
+  return values.reduce((sum, item) => sum + item, 0) / values.length;
+}
+
 function signalMetrics(session) {
   const raw = session.raw;
   if (!raw.length) {
@@ -301,6 +309,142 @@ function signalMetrics(session) {
     thresholdMax,
     emergencyStops,
   };
+}
+
+function wellnessStatus(score, inverted = false) {
+  const normalized = clamp(Math.round(score), 0, 100);
+  const normal = inverted ? normalized <= 40 : normalized >= 70;
+  const moderate = inverted ? normalized <= 70 : normalized >= 40;
+  if (normal) return { label: 'Normal', tone: 'green' };
+  if (moderate) return { label: 'Moderate', tone: 'amber' };
+  return { label: 'Needs Attention', tone: 'red' };
+}
+
+function buildWellnessRecommendations(wellness) {
+  if (!wellness.hasSignal) return ['Waiting for live EOG signal before generating wellness recommendations.'];
+
+  const recs = [];
+  if (wellness.blinkRate.value < 8) recs.push('User appears highly focused based on low EOG blink frequency.');
+  if (wellness.blinkRate.value > 24) recs.push('Possible eye fatigue indicated by elevated EOG blink frequency. Consider taking a short break.');
+  if (wellness.signalQuality.value < 55) recs.push('Electrode placement may need adjustment based on EOG signal quality.');
+  if (wellness.eyeMovementIntensity.value > 70) recs.push('High eye activity observed from frequent large EOG signal changes.');
+  if (wellness.eyeActivityLevel.value > 72) recs.push('Frequent large eye movements are present in the recent EOG stream.');
+  if (wellness.focusIndicator.value > 78 && wellness.eyeActivityLevel.value < 45) recs.push('User appears highly focused from low blink frequency and stable eye movement patterns.');
+  if (wellness.fatigueIndicator.value > 68) recs.push('Eye fatigue indicator is elevated from blink frequency, blink duration, and EOG movement intensity.');
+  if (!recs.length) recs.push('EOG wellness indicators are within the current normal range.');
+  return recs;
+}
+
+function wellnessMetrics(session, metrics) {
+  const history = session.telemetryHistory;
+  if (!history.length) {
+    const waitingMetric = { value: 0, display: 'Waiting for Live Signal...', status: { label: 'Waiting', tone: 'neutral' } };
+    return {
+      hasSignal: false,
+      blinkCount: { ...waitingMetric, value: session.blinks },
+      blinkRate: waitingMetric,
+      averageBlinkDuration: waitingMetric,
+      averageEyeMovementSpeed: waitingMetric,
+      leftRightMovements: waitingMetric,
+      upDownMovements: waitingMetric,
+      eyeActivityLevel: waitingMetric,
+      signalQuality: waitingMetric,
+      focusIndicator: waitingMetric,
+      fatigueIndicator: waitingMetric,
+      eyeMovementIntensity: waitingMetric,
+      experimentalStressIndicator: waitingMetric,
+      recommendations: ['Waiting for live EOG signal before generating wellness recommendations.'],
+      timeline: [],
+      summary: {
+        averageBlinkRate: 0,
+        maximumBlinkRate: 0,
+        signalQuality: 0,
+        eyeActivityScore: 0,
+        estimatedFocusLevel: 0,
+        estimatedEyeFatigue: 0,
+        experimentalStressIndicator: 0,
+        recommendations: ['Waiting for live EOG signal before generating wellness recommendations.'],
+        sessionDuration: formatDuration(session.startedAt),
+        timestamp: formatDateTime(Date.now()),
+      },
+    };
+  }
+
+  const now = Date.now();
+  const elapsedMinutes = Math.max((now - session.startedAt) / 60000, 1 / 60);
+  const recent = history.slice(-160);
+  const recentWindowMs = Math.max(1, (recent.at(-1)?.timestamp || now) - (recent[0]?.timestamp || now));
+  const blinkRate = session.blinks / elapsedMinutes;
+  const blinkWindows = history.map((sample) => {
+    const windowStart = sample.timestamp - 60000;
+    const blinkCount = session.events.filter((event) => event.time >= windowStart && event.time <= sample.timestamp && event.label.includes('blink sequence detected')).length;
+    return blinkCount;
+  });
+  const maxBlinkRate = blinkWindows.length ? Math.max(...blinkWindows) : Math.round(blinkRate);
+  const deltas = recent.slice(1).map((sample, index) => Math.abs(sample.raw - recent[index].raw));
+  const signedOffsets = recent.map((sample) => sample.raw - sample.baseline);
+  const positiveMoves = signedOffsets.filter((value) => value > Math.max(35, Math.abs(metrics.threshold - metrics.baseline) * 0.18)).length;
+  const negativeMoves = signedOffsets.filter((value) => value < -Math.max(35, Math.abs(metrics.threshold - metrics.baseline) * 0.18)).length;
+  const upMoves = deltas.filter((value, index) => recent[index + 1].raw > recent[index].raw && value > 24).length;
+  const downMoves = deltas.filter((value, index) => recent[index + 1].raw < recent[index].raw && value > 24).length;
+  const movementSpeed = deltas.length ? average(deltas) / Math.max(recentWindowMs / deltas.length, 1) * 1000 : 0;
+  const intensityScore = clamp(average(deltas) / 4, 0, 100);
+  const eyeActivityScore = clamp((positiveMoves + negativeMoves + upMoves + downMoves) / Math.max(recent.length, 1) * 180 + intensityScore * 0.45, 0, 100);
+  const avgBlinkDurationMs = session.blinkDurations?.length ? average(session.blinkDurations.slice(-20)) : 0;
+  const durationScore = avgBlinkDurationMs ? clamp((avgBlinkDurationMs - 120) / 5, 0, 100) : 0;
+  const focusScore = clamp(100 - Math.abs(blinkRate - 10) * 4 - eyeActivityScore * 0.35 + metrics.reliability * 0.2, 0, 100);
+  const fatigueScore = clamp(Math.max(0, blinkRate - 16) * 3 + durationScore * 0.3 + intensityScore * 0.28 + Math.max(0, 65 - metrics.reliability) * 0.45, 0, 100);
+  const experimentalStressScore = clamp(intensityScore * 0.36 + Math.max(0, blinkRate - 18) * 2.2 + Math.max(0, 70 - metrics.reliability) * 0.4, 0, 100);
+
+  const timeline = history.slice(-80).map((sample, index, items) => {
+    const previous = items[index - 1] || sample;
+    const delta = Math.abs(sample.raw - previous.raw);
+    const windowStart = sample.timestamp - 60000;
+    const windowBlinks = session.events.filter((event) => event.time >= windowStart && event.time <= sample.timestamp && event.label.includes('blink sequence detected')).length;
+    const quality = clamp(metrics.reliability - Math.min(35, delta / 9), 0, 100);
+    const activity = clamp(delta / 4, 0, 100);
+    const focus = clamp(100 - windowBlinks * 5 - activity * 0.35 + quality * 0.12, 0, 100);
+    const fatigue = clamp(windowBlinks * 7 + activity * 0.32 + Math.max(0, 60 - quality) * 0.35, 0, 100);
+    return {
+      label: new Date(sample.timestamp).toLocaleTimeString('en-US', { hour12: false }),
+      blinkRate: windowBlinks,
+      eyeActivity: activity,
+      focus,
+      signalQuality: quality,
+      fatigue,
+    };
+  });
+
+  const result = {
+    hasSignal: true,
+    blinkCount: { value: session.blinks, display: String(session.blinks), status: wellnessStatus(100) },
+    blinkRate: { value: blinkRate, display: `${blinkRate.toFixed(1)} / min`, status: wellnessStatus(blinkRate > 24 ? 34 : blinkRate < 8 ? 62 : 88) },
+    averageBlinkDuration: { value: avgBlinkDurationMs, display: avgBlinkDurationMs ? `${avgBlinkDurationMs.toFixed(0)} ms` : 'Awaiting blink timing', status: wellnessStatus(avgBlinkDurationMs ? 100 - durationScore : 70) },
+    averageEyeMovementSpeed: { value: movementSpeed, display: `${movementSpeed.toFixed(1)} ADC/s`, status: wellnessStatus(intensityScore, true) },
+    leftRightMovements: { value: positiveMoves + negativeMoves, display: `${negativeMoves} / ${positiveMoves}`, status: wellnessStatus(eyeActivityScore, true) },
+    upDownMovements: { value: upMoves + downMoves, display: `${upMoves} / ${downMoves}`, status: wellnessStatus(eyeActivityScore, true) },
+    eyeActivityLevel: { value: eyeActivityScore, display: `${eyeActivityScore.toFixed(0)}%`, status: wellnessStatus(eyeActivityScore, true) },
+    signalQuality: { value: metrics.reliability, display: `${metrics.reliability}%`, status: wellnessStatus(metrics.reliability) },
+    focusIndicator: { value: focusScore, display: `${focusScore.toFixed(0)}%`, status: wellnessStatus(focusScore) },
+    fatigueIndicator: { value: fatigueScore, display: `${fatigueScore.toFixed(0)}%`, status: wellnessStatus(fatigueScore, true) },
+    eyeMovementIntensity: { value: intensityScore, display: `${intensityScore.toFixed(0)}%`, status: wellnessStatus(intensityScore, true) },
+    experimentalStressIndicator: { value: experimentalStressScore, display: `${experimentalStressScore.toFixed(0)}%`, status: wellnessStatus(experimentalStressScore, true) },
+    timeline,
+  };
+  result.recommendations = buildWellnessRecommendations(result);
+  result.summary = {
+    averageBlinkRate: Number(blinkRate.toFixed(2)),
+    maximumBlinkRate: maxBlinkRate,
+    signalQuality: metrics.reliability,
+    eyeActivityScore: Number(eyeActivityScore.toFixed(1)),
+    estimatedFocusLevel: Number(focusScore.toFixed(1)),
+    estimatedEyeFatigue: Number(fatigueScore.toFixed(1)),
+    experimentalStressIndicator: Number(experimentalStressScore.toFixed(1)),
+    recommendations: result.recommendations,
+    sessionDuration: formatDuration(session.startedAt, now),
+    timestamp: formatDateTime(now),
+  };
+  return result;
 }
 
 function buildCaregiverRecommendations(metrics, session, sosEvents) {
@@ -490,6 +634,7 @@ function NuroNodeAI() {
   const sosEventsRef = useRef(sosEvents);
 
   const metrics = useMemo(() => signalMetrics(session), [session]);
+  const wellness = useMemo(() => wellnessMetrics(session, metrics), [metrics, session]);
   const primaryContact = useMemo(() => [...contacts].sort((a, b) => Number(a.priority) - Number(b.priority))[0], [contacts]);
   const recommendations = useMemo(() => buildCaregiverRecommendations(metrics, session, sosEvents), [metrics, session, sosEvents]);
   const commandCounts = useMemo(() => {
@@ -751,9 +896,12 @@ function NuroNodeAI() {
       }
 
       if (parsed.type === 'blink-detected') {
+        const blinkDuration = prev.activeBlinkStartedAt ? timestamp - prev.activeBlinkStartedAt : null;
         return {
           ...prev,
           blinks: prev.blinks + 1,
+          activeBlinkStartedAt: null,
+          blinkDurations: Number.isFinite(blinkDuration) ? [...prev.blinkDurations.slice(-39), blinkDuration] : prev.blinkDurations,
           currentBlinkSequence: parsed.count,
           events: [...prev.events.slice(-119), { time: timestamp, label: `${parsed.count} blink sequence detected` }],
         };
@@ -786,6 +934,7 @@ function NuroNodeAI() {
       if (parsed.type === 'event' || parsed.type === 'calibration-log' || parsed.type === 'system') {
         return {
           ...prev,
+          activeBlinkStartedAt: parsed.label === 'Blink started' ? timestamp : prev.activeBlinkStartedAt,
           events: [...prev.events.slice(-119), { time: timestamp, label: parsed.label }],
         };
       }
@@ -1067,12 +1216,17 @@ function NuroNodeAI() {
         baseline: session.baseline.slice(-220),
         threshold: session.threshold.slice(-220),
         signalQuality: metrics.quality,
+        blinkDurations: session.blinkDurations,
       },
       metrics: { ...metrics },
+      wellnessSummary: wellness.summary,
+      wellnessTimeline: wellness.timeline,
+      wellnessRecommendations: wellness.recommendations,
+      disclaimer: WELLNESS_DISCLAIMER,
       sosEvents: sosEvents.slice(0, 20),
       recommendations,
     };
-  }, [metrics, patient, recommendations, session, sosEvents]);
+  }, [metrics, patient, recommendations, session, sosEvents, wellness]);
 
   const saveCurrentReport = useCallback(async () => {
     if (!authUser) return;
@@ -1118,6 +1272,8 @@ function NuroNodeAI() {
             blink_count: payload.session.blinks,
             blink_events: payload.session.blinkEvents,
             signal_quality: payload.session.signalQuality,
+            wellness_summary: payload.wellnessSummary,
+            wellness_recommendations: payload.wellnessRecommendations,
             session_duration: payload.session.duration,
             metrics: payload.metrics,
             commands: payload.session.commands.slice(-30),
@@ -1153,7 +1309,7 @@ function NuroNodeAI() {
   }, [authUser, buildReportPayload]);
 
   const exportCsv = useCallback(() => {
-    const headers = ['timestamp', 'raw_signal', 'baseline', 'blink_threshold', 'last_command', 'patient_name', 'session_id'];
+    const headers = ['timestamp', 'raw_signal', 'baseline', 'blink_threshold', 'last_command', 'patient_name', 'session_id', 'blink_rate_per_min', 'eye_activity_score', 'focus_level', 'signal_quality', 'eye_fatigue_indicator', 'experimental_stress_indicator'];
     const rows = session.telemetryHistory.map((sample) => [
       new Date(sample.timestamp).toISOString(),
       sample.raw,
@@ -1162,10 +1318,31 @@ function NuroNodeAI() {
       session.lastCommand,
       patient.fullName,
       session.id,
+      wellness.summary.averageBlinkRate,
+      wellness.summary.eyeActivityScore,
+      wellness.summary.estimatedFocusLevel,
+      wellness.summary.signalQuality,
+      wellness.summary.estimatedEyeFatigue,
+      wellness.summary.experimentalStressIndicator,
     ]);
-    const content = [headers, ...rows].map((row) => row.map(toCsvValue).join(',')).join('\n');
+    const summaryRows = [
+      [],
+      ['WELLNESS SUMMARY'],
+      ['Average Blink Rate', wellness.summary.averageBlinkRate],
+      ['Maximum Blink Rate', wellness.summary.maximumBlinkRate],
+      ['Signal Quality', wellness.summary.signalQuality],
+      ['Eye Activity Score', wellness.summary.eyeActivityScore],
+      ['Estimated Focus Level', wellness.summary.estimatedFocusLevel],
+      ['Estimated Eye Fatigue', wellness.summary.estimatedEyeFatigue],
+      ['Experimental Stress Indicator', wellness.summary.experimentalStressIndicator],
+      ['Session Duration', wellness.summary.sessionDuration],
+      ['Timestamp', wellness.summary.timestamp],
+      ['Recommendations', wellness.summary.recommendations.join(' | ')],
+      ['Disclaimer', WELLNESS_DISCLAIMER],
+    ];
+    const content = [headers, ...rows, ...summaryRows].map((row) => row.map(toCsvValue).join(',')).join('\n');
     downloadText(`NuroNode_Session_${session.id}.csv`, content, 'text/csv;charset=utf-8');
-  }, [patient.fullName, session]);
+  }, [patient.fullName, session, wellness]);
 
   const exportReportHtml = useCallback(async () => {
     const html = document.querySelector('.report-preview')?.outerHTML || '';
@@ -1382,6 +1559,7 @@ function NuroNodeAI() {
             chartData={chartData}
             chartOptions={chartOptions}
             metrics={metrics}
+            wellness={wellness}
             session={session}
             logs={logs}
           />
@@ -1433,6 +1611,7 @@ function NuroNodeAI() {
             patient={patient}
             session={session}
             metrics={metrics}
+            wellness={wellness}
             sosEvents={sosEvents}
             recommendations={recommendations}
             exportCsv={exportCsv}
@@ -1972,6 +2151,7 @@ function ReportsPage({
   patient,
   session,
   metrics,
+  wellness,
   sosEvents,
   recommendations,
   exportCsv,
@@ -1993,6 +2173,7 @@ function ReportsPage({
         <Card title="Session Reports" value={session.id} meta={formatDateTime(session.startedAt)} />
         <Card title="Signal Analytics" value={`${metrics.reliability}%`} meta={metrics.contact} tone={metrics.reliability > 80 ? 'green' : 'amber'} />
         <Card title="Blink Analytics" value={session.blinks} meta={`${session.blinkSequences.length} executed sequences`} />
+        <Card title="Wellness Insights" value={wellness.hasSignal ? `${wellness.eyeActivityLevel.display}` : 'Waiting'} meta="EOG wellness summary" tone={wellness.eyeActivityLevel.status.tone} />
         <Card title="Emergency History" value={sosEvents.length} meta={sosEvents[0] ? `Last: ${sosEvents[0].triggeredBy}` : 'No SOS events'} tone={sosEvents.length ? 'red' : 'green'} />
       </div>
 
@@ -2020,6 +2201,7 @@ function ReportsPage({
         patient={patient}
         session={session}
         metrics={metrics}
+        wellness={wellness}
         sosEvents={sosEvents}
         recommendations={recommendations}
         exportCsv={exportCsv}
@@ -2103,7 +2285,7 @@ function AiHealthChat({ messages, loading, onAsk }) {
   );
 }
 
-function ReportGenerator({ patient, session, metrics, sosEvents, recommendations, exportCsv, exportReportHtml, saveCurrentReport }) {
+function ReportGenerator({ patient, session, metrics, wellness, sosEvents, recommendations, exportCsv, exportReportHtml, saveCurrentReport }) {
   const endedAt = Date.now();
   const emergencyStops = session.commands.filter((item) => item.command === 'EMERGENCY_STOP').length;
 
@@ -2181,6 +2363,30 @@ function ReportGenerator({ patient, session, metrics, sosEvents, recommendations
           </div>
         </section>
         <section>
+          <h3>Wellness Insights</h3>
+          <div className="report-grid">
+            <Stat label="Average Blink Rate" value={`${wellness.summary.averageBlinkRate} blinks/min`} />
+            <Stat label="Maximum Blink Rate" value={`${wellness.summary.maximumBlinkRate} blinks/min`} />
+            <Stat label="Signal Quality" value={`${wellness.summary.signalQuality}%`} />
+            <Stat label="Eye Activity Score" value={`${wellness.summary.eyeActivityScore}%`} />
+            <Stat label="Estimated Focus Level" value={`${wellness.summary.estimatedFocusLevel}%`} />
+            <Stat label="Estimated Eye Fatigue" value={`${wellness.summary.estimatedEyeFatigue}%`} />
+            <Stat label="Experimental Stress Indicator" value={`${wellness.summary.experimentalStressIndicator}%`} />
+            <Stat label="Session Duration" value={wellness.summary.sessionDuration} />
+            <Stat label="Timestamp" value={wellness.summary.timestamp} />
+          </div>
+        </section>
+        <section>
+          <h3>Charts</h3>
+          <div className="report-grid">
+            <Stat label="Blink Rate Timeline" value={wellness.timeline.length ? 'Included in live Wellness Insights' : 'Waiting for Live Signal...'} />
+            <Stat label="Eye Activity Timeline" value={wellness.timeline.length ? 'Included in live Wellness Insights' : 'Waiting for Live Signal...'} />
+            <Stat label="Focus Level Timeline" value={wellness.timeline.length ? 'Included in live Wellness Insights' : 'Waiting for Live Signal...'} />
+            <Stat label="Signal Quality Timeline" value={wellness.timeline.length ? 'Included in live Wellness Insights' : 'Waiting for Live Signal...'} />
+            <Stat label="Fatigue Trend" value={wellness.timeline.length ? 'Included in live Wellness Insights' : 'Waiting for Live Signal...'} />
+          </div>
+        </section>
+        <section>
           <h3>Command History</h3>
           <div className="report-grid">
             {session.commands.slice(-8).reverse().map((item, index) => (
@@ -2201,9 +2407,17 @@ function ReportGenerator({ patient, session, metrics, sosEvents, recommendations
         <section>
           <h3>Caregiver Recommendations</h3>
           <ul>
-            {recommendations.map((item) => <li key={item}>{item}</li>)}
+            {[...recommendations, ...wellness.recommendations].map((item) => <li key={item}>{item}</li>)}
           </ul>
         </section>
+        <section>
+          <h3>Disclaimer</h3>
+          <p>{WELLNESS_DISCLAIMER}</p>
+        </section>
+        <footer className="report-footer">
+          <strong>NeuroNode AI</strong>
+          <span>Powered by Oryen Dynamics</span>
+        </footer>
       </div>
     </Panel>
   );
@@ -2270,38 +2484,170 @@ function MedicalProfilePage({ patient, contacts, activeSos, triggerManualEmergen
   );
 }
 
-function SignalCenter({ chartData, chartOptions, metrics, session, logs }) {
+function SignalCenter({ chartData, chartOptions, metrics, wellness, session, logs }) {
+  const [activeTab, setActiveTab] = useState('live');
+  const tabs = [
+    ['live', 'Live Signal'],
+    ['analysis', 'Analysis'],
+    ['wellness', '🧠 Wellness Insights'],
+  ];
+
   return (
     <div className="screen-stack">
-      <Panel title="Live EOG Signal" right={<StatusPill status={`${session.packets} packets`} tone={session.packets ? 'success' : 'neutral'} />}>
-        <div className="chart-wrap">
-          {session.raw.length ? <Line data={chartData} options={chartOptions} /> : <div className="empty-chart">Waiting for Nurosync telemetry</div>}
+      <div className="module-tabs">
+        {tabs.map(([id, label]) => (
+          <button key={id} className={activeTab === id ? 'active' : ''} onClick={() => setActiveTab(id)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'live' && (
+        <Panel title="Live EOG Signal" right={<StatusPill status={`${session.packets} packets`} tone={session.packets ? 'success' : 'neutral'} />}>
+          <div className="chart-wrap">
+            {session.raw.length ? <Line data={chartData} options={chartOptions} /> : <div className="empty-chart">Waiting for Nurosync telemetry</div>}
+          </div>
+        </Panel>
+      )}
+
+      {activeTab === 'analysis' && (
+        <>
+          <div className="metric-grid">
+            <Card title="Raw Signal" value={Math.round(metrics.latest)} meta="0-4095 ADC" />
+            <Card title="Baseline" value={Math.round(metrics.baseline)} meta="Firmware calibrated" tone="green" />
+            <Card title="Threshold" value={Math.round(metrics.threshold)} meta="Blink trigger level" tone="amber" />
+            <Card title="Signal Quality" value={`${metrics.qualityScore}%`} meta={metrics.contact} tone={metrics.reliability > 80 ? 'green' : 'amber'} />
+          </div>
+
+          <div className="two-column">
+            <Panel title="Session Analytics">
+              <div className="stat-list">
+                <Stat label="Average signal" value={metrics.average.toFixed(1)} />
+                <Stat label="Peak signal" value={Math.round(metrics.peak)} />
+                <Stat label="Noise estimate" value={metrics.noise.toFixed(1)} />
+                <Stat label="Baseline drift" value={metrics.drift.toFixed(1)} />
+                <Stat label="Blink events" value={session.blinks} />
+                <Stat label="Command count" value={session.commands.length} />
+              </div>
+            </Panel>
+            <Panel title="Firmware Event Stream">
+              <EventList items={logs.slice(-10).reverse().map((item) => ({ time: Date.now(), label: item.text, type: item.type }))} />
+            </Panel>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'wellness' && <WellnessInsightsPanel wellness={wellness} session={session} />}
+    </div>
+  );
+}
+
+function WellnessInsightsPanel({ wellness, session }) {
+  const cards = [
+    ['👁 Blink Count', wellness.blinkCount],
+    ['👁 Blink Rate (blinks/min)', wellness.blinkRate],
+    ['👁 Average Blink Duration', wellness.averageBlinkDuration],
+    ['👁 Average Eye Movement Speed', wellness.averageEyeMovementSpeed],
+    ['👁 Left / Right Eye Movements', wellness.leftRightMovements],
+    ['👁 Up / Down Eye Movements', wellness.upDownMovements],
+    ['Eye Activity Level', wellness.eyeActivityLevel],
+    ['📶 Signal Quality', wellness.signalQuality],
+    ['🎯 Focus Indicator', wellness.focusIndicator],
+    ['😴 Eye Fatigue Indicator', wellness.fatigueIndicator],
+    ['⚡ Eye Movement Intensity', wellness.eyeMovementIntensity],
+    ['🟡 Experimental Stress Indicator', wellness.experimentalStressIndicator],
+  ];
+
+  return (
+    <div className="screen-stack">
+      <Panel title="Wellness Insights" right={<StatusPill status={wellness.hasSignal ? `${session.packets} live packets` : 'Waiting'} tone={wellness.hasSignal ? 'success' : 'neutral'} />}>
+        <p className="wellness-disclaimer">{WELLNESS_DISCLAIMER}</p>
+        <div className="metric-grid wellness-grid">
+          {cards.map(([title, item]) => (
+            <WellnessMetricCard key={title} title={title} item={item} />
+          ))}
         </div>
       </Panel>
 
-      <div className="metric-grid">
-        <Card title="Raw Signal" value={Math.round(metrics.latest)} meta="0-4095 ADC" />
-        <Card title="Baseline" value={Math.round(metrics.baseline)} meta="Firmware calibrated" tone="green" />
-        <Card title="Threshold" value={Math.round(metrics.threshold)} meta="Blink trigger level" tone="amber" />
-        <Card title="Signal Quality" value={`${metrics.qualityScore}%`} meta={metrics.contact} tone={metrics.reliability > 80 ? 'green' : 'amber'} />
+      <div className="two-column">
+        <Panel title="AI-Style EOG Recommendations" right={<StatusPill status="EOG metrics only" tone="warning" />}>
+          <div className="recommendation-list">
+            {wellness.recommendations.map((item) => <div key={item}>{item}</div>)}
+          </div>
+        </Panel>
+        <Panel title="Status Legend">
+          <div className="stat-list">
+            <Stat label="Green" value="Normal" />
+            <Stat label="Yellow" value="Moderate" />
+            <Stat label="Red" value="Needs Attention" />
+          </div>
+        </Panel>
       </div>
 
       <div className="two-column">
-        <Panel title="Session Analytics">
-          <div className="stat-list">
-            <Stat label="Average signal" value={metrics.average.toFixed(1)} />
-            <Stat label="Peak signal" value={Math.round(metrics.peak)} />
-            <Stat label="Noise estimate" value={metrics.noise.toFixed(1)} />
-            <Stat label="Baseline drift" value={metrics.drift.toFixed(1)} />
-            <Stat label="Blink events" value={session.blinks} />
-            <Stat label="Command count" value={session.commands.length} />
-          </div>
-        </Panel>
-        <Panel title="Firmware Event Stream">
-          <EventList items={logs.slice(-10).reverse().map((item) => ({ time: Date.now(), label: item.text, type: item.type }))} />
-        </Panel>
+        <WellnessTimelineChart title="Blink Rate Timeline" wellness={wellness} field="blinkRate" color="#00D4FF" />
+        <WellnessTimelineChart title="Eye Activity Timeline" wellness={wellness} field="eyeActivity" color="#A855F7" />
       </div>
+      <div className="two-column">
+        <WellnessTimelineChart title="Focus Level Timeline" wellness={wellness} field="focus" color="#22C55E" />
+        <WellnessTimelineChart title="Signal Quality Timeline" wellness={wellness} field="signalQuality" color="#38BDF8" />
+      </div>
+      <WellnessTimelineChart title="Fatigue Trend" wellness={wellness} field="fatigue" color="#F59E0B" />
     </div>
+  );
+}
+
+function WellnessMetricCard({ title, item }) {
+  return (
+    <section className={`metric-card ${item.status.tone === 'neutral' ? '' : item.status.tone}`}>
+      <div className="card-label">{title}</div>
+      <div className="card-value">{item.display}</div>
+      <div className="card-meta">{item.status.label}</div>
+    </section>
+  );
+}
+
+function WellnessTimelineChart({ title, wellness, field, color }) {
+  const data = {
+    labels: wellness.timeline.map((item) => item.label),
+    datasets: [
+      {
+        label: title,
+        data: wellness.timeline.map((item) => item[field]),
+        borderColor: color,
+        backgroundColor: `${color}24`,
+        tension: 0.34,
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: true,
+      },
+    ],
+  };
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 450, easing: 'easeOutQuart' },
+    scales: {
+      x: { display: false },
+      y: {
+        min: 0,
+        max: 100,
+        grid: { color: 'rgba(148, 163, 184, 0.10)' },
+        ticks: { color: 'rgba(226, 232, 240, 0.55)' },
+      },
+    },
+    plugins: {
+      legend: { labels: { color: '#CBD5E1', boxWidth: 10, usePointStyle: true } },
+      tooltip: { enabled: true },
+    },
+  };
+
+  return (
+    <Panel title={title}>
+      <div className="chart-wrap wellness-chart">
+        {wellness.timeline.length ? <Line data={data} options={options} /> : <div className="empty-chart">Waiting for Live Signal...</div>}
+      </div>
+    </Panel>
   );
 }
 
