@@ -26,5 +26,6 @@ service-account*.json
 dist-smoke/
 .vercel/
 .railway/
+.chrome-vercel-debug*/
 
 .vercel
