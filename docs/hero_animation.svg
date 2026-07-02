@@ -1,0 +1,421 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <!-- Web Fonts -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&amp;family=Outfit:wght@300;400;600&amp;display=swap');
+
+      /* Base styles */
+      .bg { fill: #050814; }
+      .grid { stroke: rgba(0, 229, 255, 0.04); stroke-width: 1; }
+      .tech-ring { stroke: rgba(158, 0, 255, 0.15); stroke-width: 1.5; fill: none; stroke-dasharray: 4 8; }
+      
+      /* Typography */
+      .title-text { font-family: 'Orbitron', sans-serif; font-size: 16px; fill: #00E5FF; letter-spacing: 2px; opacity: 0.8; }
+      .sub-text { font-family: 'Outfit', sans-serif; font-size: 13px; fill: #94A3B8; }
+      .brand-text { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 22px; fill: #FFFFFF; letter-spacing: 3px; }
+      
+      /* Neon Glow Filters */
+      .glow-cyan { filter: url(#cyan-glow-filter); }
+      .glow-purple { filter: url(#purple-glow-filter); }
+      .glow-yellow { filter: url(#yellow-glow-filter); }
+
+      /* Animation Timelines (15 Second Loop) */
+      
+      /* Cybernetic Eye Eyelids (Blinking) */
+      #top-lid {
+        animation: top-lid-blink 15s infinite ease-in-out;
+      }
+      #bottom-lid {
+        animation: bottom-lid-blink 15s infinite ease-in-out;
+      }
+      @keyframes top-lid-blink {
+        0%, 7.5%, 9.5%, 20.5%, 22.5%, 40.5%, 42.5%, 60.5%, 62.5%, 72.5%, 74.5%, 85.5%, 87.5%, 100% { y: -80px; }
+        8.5%, 21.5%, 41.5%, 61.5%, 73.5%, 86.5% { y: 20px; } /* closed */
+      }
+      @keyframes bottom-lid-blink {
+        0%, 7.5%, 9.5%, 20.5%, 22.5%, 40.5%, 42.5%, 60.5%, 62.5%, 72.5%, 74.5%, 85.5%, 87.5%, 100% { y: 220px; }
+        8.5%, 21.5%, 41.5%, 61.5%, 73.5%, 86.5% { y: 120px; } /* closed */
+      }
+
+      /* Eye Pupil Direction Control */
+      #pupil-group {
+        animation: pupil-move 15s infinite ease-in-out;
+      }
+      @keyframes pupil-move {
+        0%, 10% { transform: translate(0px, 0px); } /* center */
+        12%, 30% { transform: translate(25px, -10px); } /* look up-right at wheelchair */
+        32%, 50% { transform: translate(28px, 15px); } /* look down-right at home automation */
+        52%, 70% { transform: translate(30px, 5px); } /* look right at dashboard */
+        72%, 85% { transform: translate(25px, -20px); } /* look at Gemini */
+        87%, 100% { transform: translate(0px, 0px); } /* center */
+      }
+
+      /* Wheelchair Animation */
+      #wheelchair-card {
+        animation: wc-card-highlight 15s infinite;
+      }
+      #wc-icon {
+        animation: wc-icon-move 15s infinite;
+      }
+      #wc-speedlines line {
+        animation: wc-lines-fade 15s infinite;
+      }
+      @keyframes wc-card-highlight {
+        0%, 11%, 29%, 100% { stroke: rgba(148, 163, 184, 0.2); fill: #0b0f19; }
+        12%, 28% { stroke: #00E5FF; fill: #0e1b2b; }
+      }
+      @keyframes wc-icon-move {
+        0%, 15%, 27%, 100% { transform: translate(0px, 0px); }
+        16%, 22% { transform: translate(12px, 0px); } /* moving */
+        23%, 26% { transform: translate(20px, 0px); } /* stop */
+      }
+      @keyframes wc-lines-fade {
+        0%, 15%, 27%, 100% { opacity: 0; stroke-dashoffset: 20; }
+        16%, 22% { opacity: 0.8; stroke-dashoffset: 0; }
+        23%, 26% { opacity: 0; }
+      }
+
+      /* Home Automation Animation */
+      #home-card {
+        animation: home-card-highlight 15s infinite;
+      }
+      #ha-bulb {
+        animation: ha-bulb-glow 15s infinite;
+      }
+      #ha-fan {
+        animation: ha-fan-spin 15s infinite linear;
+        transform-origin: 650px 185px;
+      }
+      #ha-home-glow {
+        animation: ha-home-light 15s infinite;
+      }
+      @keyframes home-card-highlight {
+        0%, 31%, 49%, 100% { stroke: rgba(148, 163, 184, 0.2); fill: #0b0f19; }
+        32%, 48% { stroke: #9E00FF; fill: #16112c; }
+      }
+      @keyframes ha-bulb-glow {
+        0%, 33%, 47%, 100% { fill: none; stroke: #CBD5E1; }
+        34%, 46% { fill: #FFD700; stroke: #FFD700; filter: url(#yellow-glow-filter); }
+      }
+      @keyframes ha-fan-spin {
+        0%, 35%, 47%, 100% { transform: rotate(0deg); stroke: #CBD5E1; }
+        36%, 46% { transform: rotate(1440deg); stroke: #00E5FF; }
+      }
+      @keyframes ha-home-light {
+        0%, 37%, 47%, 100% { stroke: #CBD5E1; }
+        38%, 46% { stroke: #A855F7; filter: url(#purple-glow-filter); }
+      }
+
+      /* Dashboard Animation */
+      #dash-card {
+        animation: dash-card-highlight 15s infinite;
+      }
+      #dash-wave {
+        animation: dash-wave-draw 15s infinite linear;
+        stroke-dasharray: 300;
+        stroke-dashoffset: 300;
+      }
+      @keyframes dash-card-highlight {
+        0%, 51%, 69%, 100% { stroke: rgba(148, 163, 184, 0.2); fill: #0b0f19; }
+        52%, 68% { stroke: #00E5FF; fill: #0e1b2b; }
+      }
+      @keyframes dash-wave-draw {
+        0%, 51%, 100% { stroke-dashoffset: 300; stroke: #475569; }
+        52%, 67% { stroke-dashoffset: 0; stroke: #00E5FF; filter: url(#cyan-glow-filter); }
+      }
+
+      /* Medical QR Animation */
+      #qr-card {
+        animation: qr-card-highlight 15s infinite;
+      }
+      #qr-scanline {
+        animation: qr-scan 15s infinite ease-in-out;
+      }
+      #qr-cross {
+        animation: qr-cross-pulse 15s infinite;
+      }
+      @keyframes qr-card-highlight {
+        0%, 61%, 79%, 100% { stroke: rgba(148, 163, 184, 0.2); fill: #0b0f19; }
+        62%, 78% { stroke: #EF4444; fill: #200f13; }
+      }
+      @keyframes qr-scan {
+        0%, 61%, 78%, 100% { y: 260px; opacity: 0; }
+        62%, 77% { y: 325px; opacity: 1; }
+      }
+      @keyframes qr-cross-pulse {
+        0%, 61%, 78%, 100% { fill: #475569; }
+        62%, 77% { fill: #EF4444; filter: url(#red-glow-filter); }
+      }
+
+      /* Gemini AI Animation */
+      #gemini-card {
+        animation: gemini-card-highlight 15s infinite;
+      }
+      #gemini-sparkle1, #gemini-sparkle2 {
+        animation: gemini-pulse 15s infinite ease-in-out;
+      }
+      @keyframes gemini-card-highlight {
+        0%, 81%, 97%, 100% { stroke: rgba(148, 163, 184, 0.2); fill: #0b0f19; }
+        82%, 96% { stroke: #A855F7; fill: #16112c; }
+      }
+      @keyframes gemini-pulse {
+        0%, 81%, 97%, 100% { transform: scale(1); opacity: 0.4; }
+        82%, 96% { transform: scale(1.25); opacity: 1; filter: url(#purple-glow-filter); }
+      }
+
+      /* Text Overlay Timeline */
+      .status-banner {
+        animation: banner-text-swap 15s infinite;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        text-anchor: middle;
+      }
+      @keyframes banner-text-swap {
+        0%, 100% { content: "System Initializing..."; fill: #94A3B8; }
+        1%, 11% { content: "Patient Calibrated. Awaiting Eye Inputs."; fill: #38BDF8; }
+        12%, 27% { content: "Horizontal Blink Triggered: Accelerating Wheelchair"; fill: #00E5FF; }
+        28%, 31% { content: "Mobility Action Completed: Wheelchair Halted"; fill: #10B981; }
+        32%, 47% { content: "Sequence Detected: Activating Smart Relay Node"; fill: #A855F7; }
+        48%, 51% { content: "Smart Home Appliances Online"; fill: #10B981; }
+        52%, 67% { content: "Presentation Layer Active: Waveform Ingest (60 FPS)"; fill: #38BDF8; }
+        68%, 77% { content: "Paramedic SOS Scanned: Accessing Public QR Profile"; fill: #EF4444; }
+        78%, 81% { content: "Firestore Emergency Route Synchronized"; fill: #10B981; }
+        82%, 96% { content: "Gemini AI Synthesizing Diagnostic Session Summary"; fill: #A855F7; }
+        97%, 99% { content: "Analysis Exported: Patient Safety Standard Guaranteed"; fill: #10B981; }
+      }
+
+      /* Logo / Core Branding Outro */
+      #outro-screen {
+        animation: outro-fade 15s infinite ease-in-out;
+        opacity: 0;
+      }
+      @keyframes outro-fade {
+        0%, 93% { opacity: 0; visibility: hidden; }
+        94%, 99% { opacity: 1; visibility: visible; }
+      }
+    </style>
+
+    <!-- Filters for Neon Glow Effect -->
+    <filter id="cyan-glow-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="purple-glow-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="yellow-glow-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="red-glow-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Clipping Mask for Cybernetic Eye Shape -->
+    <clipPath id="eye-shape-clip">
+      <path d="M 80 185 Q 180 85 280 185 Q 180 285 80 185 Z" />
+    </clipPath>
+  </defs>
+
+  <!-- 1. Background Grid -->
+  <rect class="bg" width="100%" height="100%" />
+  
+  <!-- Technical Grid Overlay -->
+  <g>
+    <path class="grid" d="M 0 50 H 800 M 0 100 H 800 M 0 150 H 800 M 0 200 H 800 M 0 250 H 800 M 0 300 H 800 M 0 350 H 800 M 0 400 H 800" />
+    <path class="grid" d="M 50 0 V 450 M 100 0 V 450 M 150 0 V 450 M 200 0 V 450 M 250 0 V 450 M 300 0 V 450 M 350 0 V 450 M 400 0 V 450 M 450 0 V 450 M 500 0 V 450 M 555 0 V 450 M 600 0 V 450 M 650 0 V 450 M 700 0 V 450 M 750 0 V 450" />
+  </g>
+
+  <!-- Decorative HUD details -->
+  <circle cx="180" cy="185" r="120" class="tech-ring" />
+  <circle cx="180" cy="185" r="125" class="tech-ring" stroke-dasharray="20 40" stroke="rgba(0, 229, 255, 0.2)" />
+  <circle cx="180" cy="185" r="85" fill="none" stroke="rgba(0, 229, 255, 0.08)" stroke-width="1" />
+
+  <!-- 2. Cybernetic Eye Module -->
+  <g id="cybernetic-eye-module">
+    <!-- EOG Electrodes indicators around the eye -->
+    <line x1="80" y1="185" x2="60" y2="185" stroke="#00E5FF" stroke-width="1.5" />
+    <circle cx="55" cy="185" r="4" fill="#00E5FF" class="glow-cyan" />
+    <text x="45" y="165" class="sub-text" font-size="9" fill="#00E5FF">Ch 1 (+)</text>
+
+    <line x1="280" y1="185" x2="300" y2="185" stroke="#00E5FF" stroke-width="1.5" />
+    <circle cx="305" cy="185" r="4" fill="#00E5FF" class="glow-cyan" />
+    <text x="295" y="165" class="sub-text" font-size="9" fill="#00E5FF">Ch 1 (-)</text>
+
+    <line x1="180" y1="65" x2="180" y2="50" stroke="#9E00FF" stroke-width="1.5" />
+    <circle cx="180" cy="45" r="4" fill="#9E00FF" class="glow-purple" />
+    <text x="190" y="48" class="sub-text" font-size="9" fill="#9E00FF">GND</text>
+
+    <!-- Outer Sclera Frame -->
+    <path d="M 80 185 Q 180 85 280 185 Q 180 285 80 185 Z" fill="none" stroke="rgba(0, 229, 255, 0.4)" stroke-width="3" />
+
+    <!-- Clipped elements (Pupil / Iris) -->
+    <g clip-path="url(#eye-shape-clip)">
+      <!-- Eye Background -->
+      <rect x="70" y="80" width="220" height="210" fill="#0c1122" />
+      <path d="M 80 185 Q 180 85 280 185 Q 180 285 80 185 Z" fill="#0f172a" />
+
+      <!-- Iris Structure -->
+      <g id="pupil-group">
+        <circle cx="180" cy="185" r="45" fill="none" stroke="#9E00FF" stroke-width="3.5" class="glow-purple" />
+        <circle cx="180" cy="185" r="32" fill="none" stroke="#A855F7" stroke-width="1" stroke-dasharray="2 4" />
+        <!-- Pupil center -->
+        <circle cx="180" cy="185" r="20" fill="#00E5FF" class="glow-cyan" />
+        <circle cx="180" cy="185" r="8" fill="#050814" />
+        <circle cx="174" cy="179" r="3" fill="#FFFFFF" opacity="0.8" />
+      </g>
+
+      <!-- Top and Bottom Blinking Eyelids -->
+      <rect id="top-lid" x="70" y="-80" width="220" height="150" fill="#050814" stroke="#00E5FF" stroke-width="2" class="glow-cyan" />
+      <rect id="bottom-lid" x="70" y="220" width="220" height="150" fill="#050814" stroke="#00E5FF" stroke-width="2" class="glow-cyan" />
+    </g>
+  </g>
+
+  <!-- 3. Actuator & Interface Cards -->
+
+  <!-- CARD A: Wheelchair Smart Mobility (Top Left) -->
+  <g id="wheelchair-card-group" transform="translate(370, 40)">
+    <rect id="wheelchair-card" width="180" height="100" rx="10" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.5" fill="#0b0f19" />
+    <text x="15" y="25" class="title-text" font-size="11">MOBILITY CONTROLLER</text>
+    
+    <!-- Wheelchair graphic -->
+    <g id="wc-icon" transform="translate(25, 45)">
+      <!-- Speed/Movement lines -->
+      <g id="wc-speedlines" stroke="#00E5FF" stroke-width="2" stroke-linecap="round">
+        <line x1="-15" y1="8" x2="-2" y2="8" />
+        <line x1="-20" y1="20" x2="-5" y2="20" />
+      </g>
+      <!-- Chair Frame -->
+      <path d="M 12 5 L 8 22 H 25" stroke="#CBD5E1" stroke-width="2.5" fill="none" stroke-linejoin="round" />
+      <path d="M 8 13 H 20" stroke="#CBD5E1" stroke-width="2.5" />
+      <circle cx="12" cy="27" r="7" stroke="#CBD5E1" stroke-width="2.5" fill="none" />
+      <circle cx="12" cy="27" r="2.5" fill="#CBD5E1" />
+      <circle cx="24" cy="30" r="3.5" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+    </g>
+    <text x="80" y="58" class="sub-text">ESP-NOW Uplink</text>
+    <text x="80" y="74" class="sub-text" font-weight="600" fill="#E2E8F0">Relay Car Node</text>
+  </g>
+
+  <!-- CARD B: Home Automation Module (Top Right) -->
+  <g id="home-card-group" transform="translate(570, 40)">
+    <rect id="home-card" width="180" height="100" rx="10" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.5" fill="#0b0f19" />
+    <text x="15" y="25" class="title-text" font-size="11" fill="#9E00FF">HOME AUTOMATION</text>
+    
+    <!-- Bulb Icon -->
+    <path id="ha-bulb" d="M 32 45 A 7 7 0 1 1 44 45 Q 44 51 41 54 V 58 H 35 V 54 Q 32 51 32 45 Z" stroke="#CBD5E1" stroke-width="2" fill="none" />
+    
+    <!-- Rotating Fan Icon -->
+    <g transform="translate(85, 48)">
+      <line x1="0" y1="-12" x2="0" y2="12" stroke="#CBD5E1" stroke-width="2" id="ha-fan" />
+      <line x1="-12" y1="0" x2="12" y2="0" stroke="#CBD5E1" stroke-width="2" />
+      <circle cx="85" cy="48" r="2" fill="#CBD5E1" />
+    </g>
+
+    <!-- Glowing House Outline -->
+    <path id="ha-home-glow" d="M 125 58 V 46 L 137 36 L 149 46 V 58 Z" stroke="#CBD5E1" stroke-width="2.5" fill="none" stroke-linejoin="round" />
+    <text x="15" y="80" class="sub-text">Status: 3 IoT Channels</text>
+  </g>
+
+  <!-- CARD C: Presentation Dashboard Waveform (Bottom Left) -->
+  <g id="dash-card-group" transform="translate(370, 165)">
+    <rect id="dash-card" width="180" height="100" rx="10" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.5" fill="#0b0f19" />
+    <text x="15" y="25" class="title-text" font-size="11">OPERATIONS DASHBOARD</text>
+    
+    <!-- Signal wave rendering -->
+    <rect x="15" y="38" width="150" height="42" rx="4" fill="#050814" stroke="rgba(226, 232, 240, 0.08)" stroke-width="1" />
+    <!-- Dynamic EOG Wave -->
+    <path id="dash-wave" d="M 20 59 L 45 59 L 52 42 L 58 72 L 64 59 L 90 59 L 98 45 L 105 70 L 112 59 L 160 59" fill="none" stroke="#475569" stroke-width="2" stroke-linejoin="round" />
+    <text x="22" y="92" font-family="'Outfit', sans-serif" font-size="8" fill="#64748B">Web Serial UI (60 FPS)</text>
+  </g>
+
+  <!-- CARD D: Emergency Medical QR Profile (Bottom Right) -->
+  <g id="qr-card-group" transform="translate(570, 165)">
+    <rect id="qr-card" width="180" height="100" rx="10" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.5" fill="#0b0f19" />
+    <text x="15" y="25" class="title-text" font-size="11" fill="#EF4444">MEDICAL EMERGENCY QR</text>
+    
+    <!-- QR Code Block Layout -->
+    <g transform="translate(20, 38)">
+      <!-- Frame -->
+      <rect x="0" y="0" width="45" height="45" rx="3" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+      <rect x="4" y="4" width="12" height="12" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+      <rect x="29" y="4" width="12" height="12" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+      <rect x="4" y="29" width="12" height="12" stroke="#CBD5E1" stroke-width="1.5" fill="none" />
+      <!-- Medical cross at center -->
+      <path id="qr-cross" d="M 20 22 H 26 M 23 19 V 25" stroke-width="2" stroke-linecap="round" />
+      
+      <!-- Scanline effect -->
+      <line id="qr-scanline" x1="-2" y1="0" x2="47" y2="0" stroke="#EF4444" stroke-width="1.5" opacity="0" />
+    </g>
+    <text x="80" y="54" class="sub-text" font-size="10">Emergency URL</text>
+    <text x="80" y="68" class="sub-text" font-size="10" font-weight="600" fill="#E2E8F0">Sanitized Data</text>
+    <text x="80" y="80" class="sub-text" font-size="8" fill="#94A3B8">Paramedic Portal</text>
+  </g>
+
+  <!-- CARD E: Google Gemini AI Coprocessor (Middle Center) -->
+  <g id="gemini-card-group" transform="translate(475, 280)">
+    <rect id="gemini-card" width="180" height="90" rx="10" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.5" fill="#0b0f19" />
+    <text x="15" y="25" class="title-text" font-size="11" fill="#A855F7">GEMINI COPROCESSOR</text>
+    
+    <!-- Gemini sparkle vector -->
+    <g transform="translate(25, 52)">
+      <!-- Main Sparkle -->
+      <path id="gemini-sparkle1" d="M 0 -15 Q 0 0 15 0 Q 0 0 0 15 Q 0 0 -15 0 Q 0 0 0 -15 Z" fill="#9E00FF" />
+      <!-- Satellite Sparkle -->
+      <path id="gemini-sparkle2" d="M 22 -18 Q 22 -10 30 -10 Q 22 -10 22 -2 Q 22 -10 14 -10 Q 22 -10 22 -18 Z" fill="#00E5FF" transform="scale(0.65)" />
+    </g>
+    <text x="75" y="48" class="sub-text">AI Telemetry</text>
+    <text x="75" y="64" class="sub-text" font-weight="600" fill="#CBD5E1">Session Reports</text>
+  </g>
+
+  <!-- 4. Real-time Status Overlay Text -->
+  <rect x="80" y="340" width="320" height="30" rx="6" fill="#0b0f19" stroke="rgba(0, 229, 255, 0.15)" stroke-width="1" />
+  <!-- Glowing green power indicator -->
+  <circle cx="100" cy="355" r="4.5" fill="#10B981" filter="url(#cyan-glow-filter)">
+    <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+  </circle>
+  <text x="115" y="360" font-family="'Outfit', sans-serif" font-size="12" fill="#E2E8F0">STATUS: </text>
+  
+  <!-- Typing simulation banner text -->
+  <text x="175" y="360" font-family="'Outfit', sans-serif" font-size="12" fill="#E2E8F0" font-weight="600">
+    <tspan class="status-banner">NeuroNode Core Active</tspan>
+  </text>
+
+  <!-- 5. OUTRO / SPLASH SCREEN (Fades in from 13.5s to 15s to loop cleanly) -->
+  <g id="outro-screen">
+    <!-- Overlay block -->
+    <rect width="800" height="450" fill="#050814" />
+    <path class="grid" d="M 0 50 H 800 M 0 100 H 800 M 0 150 H 800 M 0 200 H 800 M 0 250 H 800 M 0 300 H 800 M 0 350 H 800 M 0 400 H 800" />
+    <path class="grid" d="M 50 0 V 450 M 100 0 V 450 M 150 0 V 450 M 200 0 V 450 M 250 0 V 450 M 300 0 V 450 M 350 0 V 450 M 400 0 V 450 M 450 0 V 450 M 500 0 V 450 M 555 0 V 450 M 600 0 V 450 M 650 0 V 450 M 700 0 V 450 M 750 0 V 450" />
+    
+    <!-- Central Brand Logo -->
+    <g transform="translate(400, 200)" text-anchor="middle">
+      <!-- Cybernetic glow emblem -->
+      <circle cx="0" cy="-45" r="45" fill="none" stroke="#00E5FF" stroke-width="4" class="glow-cyan" />
+      <circle cx="0" cy="-45" r="30" fill="none" stroke="#9E00FF" stroke-width="3" class="glow-purple" />
+      <polygon points="0,-60 12,-48 0,-30 -12,-48" fill="#FFFFFF" class="glow-cyan" />
+
+      <!-- Text elements -->
+      <text x="0" y="30" class="brand-text">NEURONODE AI</text>
+      <text x="0" y="55" font-family="'Outfit', sans-serif" font-weight="300" font-size="15" fill="#38BDF8" letter-spacing="4px">ORYEN DYNAMICS</text>
+      <text x="0" y="85" font-family="'Outfit', sans-serif" font-size="13" fill="#94A3B8" italic="true">"Transforming Vision into Intelligent Action"</text>
+    </g>
+  </g>
+</svg>
