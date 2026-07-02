@@ -26,8 +26,8 @@
 
 ---
 
-## ⚡ BCI & Hardware Loop Demonstration
-The following vector-based dashboard represents the live hardware control loop, mapping microvolt ocular signals to directional mobility and smart home switches:
+## ⚡ Live Hardware Loop Demonstration
+The vector-based dashboard represents the live biological control loop, mapping microvolt ocular signals to directional mobility and smart home switches:
 
 <p align="center">
   <img src="docs/hero_animation.svg" width="100%" alt="NeuroNode AI Interface and Hardware Control Loop Animation" />
@@ -42,11 +42,18 @@ The following vector-based dashboard represents the live hardware control loop, 
 People suffering from advanced neurodegenerative disorders (such as ALS, locked-in syndrome, or severe quadriplegia) are left with eye movements as their only remaining path of motor control. While traditional gaze tracking requires heavy camera rigs, constant calibration, and struggles in bright sunlight, **EOG bypasses optics entirely** by measuring the electrical potential difference between the front and back of the eyeball.
 
 **NeuroNode AI acts as the digital safety shield and communication overlay.** It translates microvolt bio-signals from the headband into a secure, daily-use assistive platform:
-1. **Adaptive Mobility Control:** Low-latency C++ threshold mapping translating eye-blinks into directional wheelchair commands.
-2. **Clinical Signal Verification:** Real-time EOG signal ingestion, baseline calibration, and skin-impedance monitoring.
-3. **Smart Home Automation:** Direct smart relay controls allowing patients to operate household appliances (fans, lights) via eye gestures.
-4. **Paramedic SOS & QR Portal:** Cloud-synced emergency profiles and maps-linked alert triggers for immediate medical access.
-5. **Generative Caregiver Summaries:** Google Gemini AI translating confusing bio-telemetry reports into clear wellness recommendations.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                NeuroNode AI Hub                                 │
+├────────────────────────┬────────────────────────┬───────────────────────────────┤
+│    Mobility Engine     │    Smart Home IoT      │       Caregiver Portal        │
+│                        │                        │                               │
+│ Deterministic 1-blink  │ Dynamic relay controls │ Telemetry dashboard sync,     │
+│ mapping with safety    │ powering physical fan  │ public emergency QR profiles  │
+│ timeouts & auto-stops. │ and light switches.    │ and Gemini diagnostics.       │
+└────────────────────────┴────────────────────────┴───────────────────────────────┘
+```
 
 ---
 
@@ -65,45 +72,13 @@ The desktop web application features a sleek, dark-themed, glassmorphic UI optim
 
 ---
 
-## ⚡ System Architecture
+## ⚡ Complete System Architecture
 
 NeuroNode AI coordinates biological potential acquisition, local embedded filtering, wireless peer-to-peer execution, cloud storage, and generative AI models:
 
-```mermaid
-graph TD
-    %% Biological Signal Source
-    User[👁️ Patient Eye Blinks] -->|Microvolt EOG Signals| Headband[🧠 Nurosync Headband: ESP32-S3]
-    
-    %% Firmware / Local Processing
-    subgraph Firmware Level (DSP & Control)
-        Headband -->|1. Baseline Calibration| DSP[Bandpass Filter & Adaptive Thresholds]
-        DSP -->|2. Blink Sequence Detection| ESPNow[ESP-NOW Wireless Transmitter]
-        DSP -->|3. Serial telemetry output| WebSerial[Web Serial Protocol @ 115200 Baud]
-    end
-    
-    %% Wireless Receiver Controls
-    ESPNow -.->|Peer-to-Peer Radio| Car[🚗 Wheelchair/RC Car Receiver ESP32]
-    Car -->|Motor Output Pins| Motors[⚙️ L298N Motor Driver]
-    
-    %% Frontend Dashboard
-    subgraph Frontend Control Suite (React / Vite)
-        WebSerial -->|Raw_Signal, Baseline, Threshold| UI[🖥️ NuroNode React Dashboard]
-        UI -->|Send Calibration 'C' / Manual Threshold 'T'| WebSerial
-        UI -->|Save Session, Profiles| FB[🔥 Firebase Client Web SDK]
-    end
-    
-    %% Backend Services
-    subgraph FastAPI Backend Control Plane
-        UI -->|REST APIs & WebSockets| API[🐍 FastAPI App uvicorn]
-        API -->|Isolated User Storage| Firestore[(🗄️ Firestore Database)]
-        API -->|Session Summary Prompt| Gemini[🤖 Google Gemini 2.5 Flash]
-        API -->|Local Relay Control| Relay[🔌 ESP8266 Smart Automation Relays]
-    end
-    
-    %% Emergency Response Outbound
-    Firestore -->|SOS Event + Maps Link| Caregiver[👨‍⚕️ Emergency Caregivers]
-    Firestore -->|Sanitized Profile| QR[📲 Responder QR Medical Card]
-```
+<p align="center">
+  <img src="docs/system_architecture.svg" width="100%" alt="NeuroNode AI System Architecture Diagram" />
+</p>
 
 ---
 
@@ -118,6 +93,13 @@ graph LR
     ADC -->|Raw Integer @ 250Hz| Filter[🧹 C++ Moving Average Filter]
     Filter -->|Cleaned Potential| Detection[🎯 Dynamic Threshold Detection]
     Detection -->|Blink Sequences| Engine[⚙️ Command Classification]
+    style Eye fill:#050814,stroke:#00E5FF,stroke-width:2px;
+    style Elec fill:#050814,stroke:#00E5FF,stroke-width:2px;
+    style Amp fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style ADC fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style Filter fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style Detection fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style Engine fill:#050814,stroke:#10B981,stroke-width:2px;
 ```
 
 ### 2. Smart Home IoT Relay Loop
@@ -128,6 +110,12 @@ graph TD
     React -->|HTTP POST Request| ESP8266[📟 NodeMCU ESP8266 Server]
     ESP8266 -->|GPIO Digital Write| Relay[🔌 Multi-Channel Relay Module]
     Relay -->|12V / AC Load Switching| Appliance[💡 Lights, Fan, Appliance]
+    style Blink fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style WebSerial fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style React fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style ESP8266 fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style Relay fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style Appliance fill:#050814,stroke:#10B981,stroke-width:2px;
 ```
 
 ### 3. Medical QR System & Caregiver SOS Route
@@ -138,6 +126,12 @@ graph LR
     Sanitizer -->|Clones Public Copy| PubColl[📂 /public_medical_profiles]
     PubColl -->|Generates URL| QR[📲 QR Emergency Badge]
     QR -->|Paramedic Scan| WebApp[🚑 Responsive Mobile Portal]
+    style Patient fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style Cloud fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style Sanitizer fill:#050814,stroke:#9E00FF,stroke-width:2px;
+    style PubColl fill:#050814,stroke:#A855F7,stroke-width:2px;
+    style QR fill:#050814,stroke:#EF4444,stroke-width:2px;
+    style WebApp fill:#050814,stroke:#10B981,stroke-width:2px;
 ```
 
 ### 4. Google Gemini Telemetry Analysis
@@ -147,6 +141,11 @@ graph TD
     FastAPI -->|Google GenAI Prompt| Gemini[🤖 Gemini 2.5 Flash]
     Gemini -->|Zero-Shot Wellness Summary| Report[📄 PDF Report & UI Summary]
     Report -->|Actionable Feedback| Caregiver[👨‍⚕️ Caregiver / Family Alert]
+    style Session fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style FastAPI fill:#050814,stroke:#3B82F6,stroke-width:2px;
+    style Gemini fill:#050814,stroke:#A855F7,stroke-width:2px;
+    style Report fill:#050814,stroke:#10B981,stroke-width:2px;
+    style Caregiver fill:#050814,stroke:#EF4444,stroke-width:2px;
 ```
 
 ---
@@ -258,27 +257,21 @@ Open the corresponding folder inside `firmware/` with Arduino IDE:
 
 | Metric | Target Specification | Measured Performance | Verification Status |
 | :--- | :--- | :--- | :---: |
-| **Blink Recognition Accuracy** | $> 95.0\%$ | **97.4%** (Across 500 test trials) | **PASS** |
-| **Local Command Latency** | $< 50\text{ ms}$ | **12 ms** (ESP-NOW direct transmission) | **PASS** |
-| **Web Serial UI Ingest Latency** | $< 100\text{ ms}$ | **45 ms** (60 FPS canvas redraw cycle) | **PASS** |
-| **Cloud Synchronization Latency** | $< 1000\text{ ms}$ | **180 ms** (Firestore document commit) | **PASS** |
-| **Gemini AI Report Generation** | $< 5.0\text{ s}$ | **2.1 s** (Structured analysis response) | **PASS** |
-| **Hardware Sampling Frequency** | Constant $250\text{ Hz}$ | **250.0 Hz** (Hardware timer interrupt) | **PASS** |
+| **Blink Recognition Accuracy** | $> 95.0\%$ | **97.4%** (Across 500 test trials) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
+| **Local Command Latency** | $< 50\text{ ms}$ | **12 ms** (ESP-NOW direct transmission) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
+| **Web Serial UI Ingest Latency** | $< 100\text{ ms}$ | **45 ms** (60 FPS canvas redraw cycle) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
+| **Cloud Synchronization Latency** | $< 1000\text{ ms}$ | **180 ms** (Firestore document commit) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
+| **Gemini AI Report Generation** | $< 5.0\text{ s}$ | **2.1 s** (Structured analysis response) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
+| **Hardware Sampling Frequency** | Constant $250\text{ Hz}$ | **250.0 Hz** (Hardware timer interrupt) | <img src="https://img.shields.io/badge/PASS-10B981?style=flat-square&amp;logo=check" alt="PASS" /> |
 
 ---
 
 ## 🗺️ Scaling Roadmap
+Our structured roadmap timeline details the progression from laboratory validation to CE certification, mass-market manufacturing, and global clinical deployment:
 
-```
-Phase 1: DSP Calibration ────► Phase 2: Beta Launch ────► Phase 3: Clinical Trials ────► Phase 4: Medical CE/FDA
-Bench testing of moving        Field test headband with       Partner with clinics to        Obtain official device
-average C++ filters.           motor-impaired focus groups    gather performance scores.     clearance standards.
-      │
-      ▼
-Phase 8: Global Release ◄──── Phase 7: Manufacturing ◄─── Phase 6: IoT Relays ◄────────── Phase 5: Gemini AI
-Launch production units        Transition to custom PCBs      Develop wireless sockets       Optimize prompts for
-via medical distributors.      and injection-molded casings.  for household appliances.      caregiver wellness reports.
-```
+<p align="center">
+  <img src="docs/roadmap.svg" width="100%" alt="NeuroNode AI Roadmap Timeline" />
+</p>
 
 ---
 

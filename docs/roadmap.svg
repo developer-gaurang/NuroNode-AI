@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 350" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&amp;family=Outfit:wght@300;400;600&amp;display=swap');
+      
+      .bg { fill: #070a13; }
+      .grid { stroke: rgba(0, 229, 255, 0.04); stroke-width: 1; }
+      
+      /* Typography */
+      .main-title { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 16px; fill: #FFFFFF; letter-spacing: 2px; }
+      .phase-num { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 11px; fill: #00E5FF; }
+      .phase-title { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; fill: #FFFFFF; }
+      .detail-title { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 10px; fill: #CBD5E1; }
+      .detail-desc { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 9.5px; fill: #94A3B8; }
+      
+      /* Shapes styling */
+      .timeline-track { stroke: rgba(148, 163, 184, 0.15); stroke-width: 4; fill: none; }
+      .timeline-progress { stroke: #00E5FF; stroke-width: 4; fill: none; stroke-dasharray: 400 600; }
+      .timeline-node { fill: #0f172a; stroke-width: 2.5; }
+      .theme-cyan { stroke: #00E5FF; }
+      .theme-purple { stroke: #A855F7; }
+      .theme-slate { stroke: rgba(148, 163, 184, 0.4); fill: #0b0f19; }
+      
+      /* Glow filter */
+      .cyan-glow { filter: url(#cyan-glow); }
+      .purple-glow { filter: url(#purple-glow); }
+    </style>
+
+    <filter id="cyan-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="purple-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="100%" height="100%" />
+
+  <!-- Grid lines -->
+  <g>
+    <path class="grid" d="M 0 50 H 950 M 0 100 H 950 M 0 150 H 950 M 0 200 H 950 M 0 250 H 950 M 0 300 H 950" />
+    <path class="grid" d="M 50 0 V 350 M 100 0 V 350 M 150 0 V 350 M 200 0 V 350 M 250 0 V 350 M 300 0 V 350 M 350 0 V 350 M 400 0 V 350 M 450 0 V 350 M 500 0 V 350 M 550 0 V 350 M 600 0 V 350 M 650 0 V 350 M 700 0 V 350 M 750 0 V 350 M 800 0 V 350 M 850 0 V 350 M 900 0 V 350" />
+  </g>
+
+  <!-- Header Title -->
+  <g transform="translate(50, 40)">
+    <circle cx="10" cy="-6" r="5" fill="#A855F7" class="purple-glow" />
+    <text x="30" y="0" class="main-title">NEURONODE AI - PRODUCT DEVELOPMENT ROADMAP</text>
+  </g>
+
+  <!-- Main Timeline track line -->
+  <path class="timeline-track" d="M 50 170 H 900" />
+  <!-- Progress (Showing completed first 3 phases) -->
+  <path class="timeline-progress" d="M 50 170 H 380" class="cyan-glow" />
+
+  <!-- ========================================== -->
+  <!-- TIMELINE PHASES (Alternating Top/Bottom) -->
+  <!-- ========================================== -->
+
+  <!-- PHASE 1: Prototype Validation (Top) -->
+  <g transform="translate(50, 60)">
+    <rect class="timeline-node theme-cyan" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num">PHASE 1</text>
+    <text x="10" y="32" class="phase-title">Validation</text>
+    <text x="10" y="48" class="detail-title">Obj: DSP filtering</text>
+    <text x="10" y="59" class="detail-desc">Output: C++ firmware</text>
+    <text x="10" y="70" class="detail-desc">Status: Complete (100%)</text>
+  </g>
+
+  <!-- PHASE 2: Beta Launch (Bottom) -->
+  <g transform="translate(160, 180)">
+    <rect class="timeline-node theme-cyan" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num">PHASE 2</text>
+    <text x="10" y="32" class="phase-title">Beta Release</text>
+    <text x="10" y="48" class="detail-title">Obj: Field user tests</text>
+    <text x="10" y="59" class="detail-desc">Output: Beta Dashboard</text>
+    <text x="10" y="70" class="detail-desc">Status: Complete (100%)</text>
+  </g>
+
+  <!-- PHASE 3: Clinical Validation (Top) -->
+  <g transform="translate(270, 60)">
+    <rect class="timeline-node theme-cyan" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num">PHASE 3</text>
+    <text x="10" y="32" class="phase-title">Clinical Study</text>
+    <text x="10" y="48" class="detail-title">Obj: Rehabilitation tests</text>
+    <text x="10" y="59" class="detail-desc">Output: Accuracy logs</text>
+    <text x="10" y="70" class="detail-desc">Status: Complete (100%)</text>
+  </g>
+
+  <!-- PHASE 4: Medical Certification (Bottom) -->
+  <g transform="translate(380, 180)">
+    <rect class="timeline-node theme-purple" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" class="purple-glow" />
+    <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#A855F7" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num" fill="#A855F7">PHASE 4</text>
+    <text x="10" y="32" class="phase-title">Certification</text>
+    <text x="10" y="48" class="detail-title">Obj: CE/FDA Clearance</text>
+    <text x="10" y="59" class="detail-desc">Output: Compliance audits</text>
+    <text x="10" y="70" class="detail-desc" fill="#A855F7">Status: Active phase</text>
+  </g>
+
+  <!-- PHASE 5: AI Diagnostics Expansion (Top) -->
+  <g transform="translate(490, 60)">
+    <rect class="timeline-node theme-slate" x="25" y="95" width="20" height="20" rx="10" />
+    <rect x="0" y="0" width="125" height="80" rx="6" class="theme-slate" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num" fill="#94A3B8">PHASE 5</text>
+    <text x="10" y="32" class="phase-title" fill="#CBD5E1">AI Upgrades</text>
+    <text x="10" y="48" class="detail-title">Obj: Prompt tuning</text>
+    <text x="10" y="59" class="detail-desc">Output: Session Summaries</text>
+    <text x="10" y="70" class="detail-desc">Status: Backlog</text>
+  </g>
+
+  <!-- PHASE 6: Home Automation Relays (Bottom) -->
+  <g transform="translate(600, 180)">
+    <rect class="timeline-node theme-slate" x="25" y="-25" width="20" height="20" rx="10" />
+    <rect x="0" y="0" width="125" height="80" rx="6" class="theme-slate" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num" fill="#94A3B8">PHASE 6</text>
+    <text x="10" y="32" class="phase-title" fill="#CBD5E1">IoT Relays</text>
+    <text x="10" y="48" class="detail-title">Obj: Wireless sockets</text>
+    <text x="10" y="59" class="detail-desc">Output: Relay firmware</text>
+    <text x="10" y="70" class="detail-desc">Status: Backlog</text>
+  </g>
+
+  <!-- PHASE 7: PCB Manufacturing (Top) -->
+  <g transform="translate(710, 60)">
+    <rect class="timeline-node theme-slate" x="25" y="95" width="20" height="20" rx="10" />
+    <rect x="0" y="0" width="125" height="80" rx="6" class="theme-slate" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num" fill="#94A3B8">PHASE 7</text>
+    <text x="10" y="32" class="phase-title" fill="#CBD5E1">Manufacturing</text>
+    <text x="10" y="48" class="detail-title">Obj: PCB Assembly</text>
+    <text x="10" y="59" class="detail-desc">Output: Gerber layouts</text>
+    <text x="10" y="70" class="detail-desc">Status: Backlog</text>
+  </g>
+
+  <!-- PHASE 8: Commercial Market Release (Bottom) -->
+  <g transform="translate(820, 180)">
+    <rect class="timeline-node theme-slate" x="25" y="-25" width="20" height="20" rx="10" />
+    <rect x="0" y="0" width="105" height="80" rx="6" class="theme-slate" stroke-width="1.5" />
+    <text x="10" y="18" class="phase-num" fill="#94A3B8">PHASE 8</text>
+    <text x="10" y="32" class="phase-title" fill="#CBD5E1">Release</text>
+    <text x="10" y="48" class="detail-title">Obj: Mass launch</text>
+    <text x="10" y="59" class="detail-desc">Output: Final device</text>
+    <text x="10" y="70" class="detail-desc">Status: Backlog</text>
+  </g>
+</svg>

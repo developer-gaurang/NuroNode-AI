@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 550" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;family=Outfit:wght@300;400;600&amp;display=swap');
+      
+      .bg { fill: #070a13; }
+      .grid { stroke: rgba(0, 229, 255, 0.04); stroke-width: 1; }
+      
+      /* Titles & Text */
+      .main-title { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 18px; fill: #FFFFFF; letter-spacing: 2px; }
+      .layer-title { font-family: 'Orbitron', sans-serif; font-weight: 600; font-size: 13px; fill: #38BDF8; letter-spacing: 1px; }
+      .node-text { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 12px; fill: #F1F5F9; }
+      .node-desc { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 10px; fill: #94A3B8; }
+      .flow-label { font-family: 'Outfit', sans-serif; font-size: 10px; fill: #00E5FF; font-weight: 600; }
+      
+      /* Boxes Styling */
+      .layer-box { fill: #0b0f19; stroke: rgba(148, 163, 184, 0.15); stroke-width: 1.5; }
+      .node-box { fill: #0f172a; stroke-width: 1.5; rx: 8px; }
+      
+      /* Color themes */
+      .theme-cyan { stroke: #00E5FF; }
+      .theme-purple { stroke: #A855F7; }
+      .theme-blue { stroke: #3B82F6; }
+      .theme-red { stroke: #EF4444; }
+      
+      /* Glow filter */
+      .cyan-glow { filter: url(#cyan-glow); }
+      .purple-glow { filter: url(#purple-glow); }
+    </style>
+
+    <filter id="cyan-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="purple-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#00E5FF" />
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#A855F7" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3B82F6" />
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect class="bg" width="100%" height="100%" />
+
+  <!-- Grid lines -->
+  <g>
+    <path class="grid" d="M 0 50 H 900 M 0 100 H 900 M 0 150 H 900 M 0 200 H 900 M 0 250 H 900 M 0 300 H 900 M 0 350 H 900 M 0 400 H 900 M 0 450 H 900 M 0 500 H 900" />
+    <path class="grid" d="M 50 0 V 550 M 100 0 V 550 M 150 0 V 550 M 200 0 V 550 M 250 0 V 550 M 300 0 V 550 M 350 0 V 550 M 400 0 V 550 M 450 0 V 550 M 500 0 V 550 M 550 0 V 550 M 600 0 V 550 M 650 0 V 550 M 700 0 V 550 M 750 0 V 550 M 800 0 V 550 M 850 0 V 550" />
+  </g>
+
+  <!-- Title header -->
+  <g transform="translate(50, 40)">
+    <circle cx="10" cy="-6" r="6" fill="#00E5FF" class="cyan-glow" />
+    <text x="30" y="0" class="main-title">NEURONODE AI - COMPLETE SYSTEM ARCHITECTURE</text>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- LAYER 1: SIGNAL PROCESSING & HARDWARE LAYER -->
+  <!-- ========================================== -->
+  <g transform="translate(50, 60)">
+    <rect class="layer-box" width="800" height="130" rx="8" />
+    <text x="20" y="25" class="layer-title">1. BIOMEDICAL SIGNAL &amp; HARDWARE ACQUISITION LAYER</text>
+
+    <!-- Node 1: Electrodes -->
+    <g transform="translate(20, 45)">
+      <rect class="node-box theme-cyan" width="130" height="65" />
+      <text x="15" y="25" class="node-text">Ag/AgCl Electrodes</text>
+      <text x="15" y="42" class="node-desc">Reads ocular potentials</text>
+      <text x="15" y="53" class="node-desc">from temple placement</text>
+    </g>
+
+    <!-- Node 2: BioAmp EXG -->
+    <g transform="translate(220, 45)">
+      <rect class="node-box theme-cyan" width="130" height="65" />
+      <text x="15" y="25" class="node-text">BioAmp EXG Pill</text>
+      <text x="15" y="42" class="node-desc">Fixed bandpass filter</text>
+      <text x="15" y="53" class="node-desc">Analog gain x26</text>
+    </g>
+
+    <!-- Node 3: ESP32-S3 -->
+    <g transform="translate(420, 45)">
+      <rect class="node-box theme-cyan" width="130" height="65" />
+      <text x="15" y="25" class="node-text">ESP32-S3 Node</text>
+      <text x="15" y="42" class="node-desc">12-bit ADC @ 250 Hz</text>
+      <text x="15" y="53" class="node-desc">C++ Moving Average Filter</text>
+    </g>
+
+    <!-- Node 4: Wheelchair Controller -->
+    <g transform="translate(640, 45)">
+      <rect class="node-box theme-cyan" width="140" height="65" />
+      <text x="15" y="25" class="node-text">ESP32 Receiver Node</text>
+      <text x="15" y="42" class="node-desc">ESP-NOW peer-to-peer</text>
+      <text x="15" y="53" class="node-desc">H-Bridge motor trigger</text>
+    </g>
+
+    <!-- Inner Connections -->
+    <path d="M 150 77 H 220" stroke="#00E5FF" stroke-width="2" marker-end="url(#arrow-cyan)" />
+    <path d="M 350 77 H 420" stroke="#00E5FF" stroke-width="2" marker-end="url(#arrow-cyan)" />
+    <path d="M 550 77 H 640" stroke="#00E5FF" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrow-cyan)" />
+    <text x="560" y="70" class="flow-label">ESP-NOW</text>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- LAYER 2: PRESENTATION & APPLICATION LAYER -->
+  <!-- ========================================== -->
+  <g transform="translate(50, 210)">
+    <rect class="layer-box" width="800" height="130" rx="8" />
+    <text x="20" y="25" class="layer-title" fill="#3B82F6">2. PRESENTATION &amp; APPLICATION LAYER (CLIENT PANEL)</text>
+
+    <!-- Node 1: Web Serial API -->
+    <g transform="translate(20, 45)">
+      <rect class="node-box theme-blue" width="130" height="65" />
+      <text x="15" y="25" class="node-text">Web Serial Ingest</text>
+      <text x="15" y="42" class="node-desc">Uplink: 115200 baud</text>
+      <text x="15" y="53" class="node-desc">useWebSerial hook</text>
+    </g>
+
+    <!-- Node 2: React UI -->
+    <g transform="translate(220, 45)">
+      <rect class="node-box theme-blue" width="220" height="65" />
+      <text x="15" y="25" class="node-text">React Operations Console</text>
+      <text x="15" y="42" class="node-desc">Glassmorphic dashboard panels, interactive</text>
+      <text x="15" y="53" class="node-desc">calibration settings, controls triggers</text>
+    </g>
+
+    <!-- Node 3: Chart.js plotting -->
+    <g transform="translate(520, 45)">
+      <rect class="node-box theme-blue" width="130" height="65" />
+      <text x="15" y="25" class="node-text">Live Waveform Center</text>
+      <text x="15" y="42" class="node-desc">Canvas rendering</text>
+      <text x="15" y="53" class="node-desc">at 60 FPS output</text>
+    </g>
+
+    <!-- Node 4: Medical QR View -->
+    <g transform="translate(680, 45)">
+      <rect class="node-box theme-red" width="100" height="65" />
+      <text x="10" y="25" class="node-text" fill="#EF4444">QR Medical Portal</text>
+      <text x="10" y="42" class="node-desc">Paramedic scan</text>
+      <text x="10" y="53" class="node-desc">Emergency View</text>
+    </g>
+
+    <!-- Inner Connections -->
+    <path d="M 150 77 H 220" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow-blue)" />
+    <path d="M 440 77 H 520" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow-blue)" />
+    <path d="M 330 110 V 125 H 730 V 110" stroke="#3B82F6" stroke-width="1.5" fill="none" marker-end="url(#arrow-blue)" />
+  </g>
+
+  <!-- ========================================== -->
+  <!-- LAYER 3: CLOUD INFRASTRUCTURE & AI LAYER -->
+  <!-- ========================================== -->
+  <g transform="translate(50, 360)">
+    <rect class="layer-box" width="800" height="130" rx="8" />
+    <text x="20" y="25" class="layer-title" fill="#A855F7">3. CLOUD INFRASTRUCTURE, DATABASE &amp; AI DIAGNOSTIC LAYER</text>
+
+    <!-- Node 1: FastAPI -->
+    <g transform="translate(20, 45)">
+      <rect class="node-box theme-purple" width="130" height="65" />
+      <text x="15" y="25" class="node-text">FastAPI Backend</text>
+      <text x="15" y="42" class="node-desc">Python REST Services</text>
+      <text x="15" y="53" class="node-desc">API Gateway</text>
+    </g>
+
+    <!-- Node 2: Firestore DB -->
+    <g transform="translate(220, 45)">
+      <rect class="node-box theme-purple" width="130" height="65" />
+      <text x="15" y="25" class="node-text">Cloud Firestore</text>
+      <text x="15" y="42" class="node-desc">Isolated user paths</text>
+      <text x="15" y="53" class="node-desc">and SOS event logs</text>
+    </g>
+
+    <!-- Node 3: Gemini AI -->
+    <g transform="translate(420, 45)">
+      <rect class="node-box theme-purple" width="140" height="65" fill="#130d22" />
+      <text x="15" y="25" class="node-text" fill="#C084FC">Gemini 2.5 Flash</text>
+      <text x="15" y="42" class="node-desc">Generative session telemetry</text>
+      <text x="15" y="53" class="node-desc">wellness interpreters</text>
+    </g>
+
+    <!-- Node 4: Smart Relays -->
+    <g transform="translate(640, 45)">
+      <rect class="node-box theme-purple" width="140" height="65" />
+      <text x="15" y="25" class="node-text">ESP8266 IoT Node</text>
+      <text x="15" y="42" class="node-desc">NodeMCU web servers</text>
+      <text x="15" y="53" class="node-desc">Light &amp; Fan Relay pins</text>
+    </g>
+
+    <!-- Inner Connections -->
+    <path d="M 150 77 H 220" stroke="#A855F7" stroke-width="2" marker-end="url(#arrow-purple)" />
+    <path d="M 150 77 V 125 H 490 V 110" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)" />
+    <path d="M 90 45 V 20 H 680 V 45" stroke="#A855F7" stroke-width="1.5" fill="none" marker-end="url(#arrow-purple)" />
+  </g>
+
+  <!-- Inter-Layer Data Stream Flows (Vertical connections) -->
+  <g fill="none" stroke-width="2">
+    <!-- Hardware to Web Serial Ingest -->
+    <path d="M 115 170 V 255" stroke="#00E5FF" marker-end="url(#arrow-cyan)" />
+    <text x="125" y="200" class="flow-label" font-size="9">Serial Raw Ingest</text>
+
+    <!-- React Dashboard to FastAPI -->
+    <path d="M 330 275 V 405" stroke="#3B82F6" marker-end="url(#arrow-blue)" />
+    <text x="340" y="340" class="flow-label" fill="#3B82F6" font-size="9">REST / WebSockets</text>
+
+    <!-- React to Firestore direct sync -->
+    <path d="M 390 275 L 315 405" stroke="#3B82F6" marker-end="url(#arrow-blue)" />
+    <text x="260" y="325" class="flow-label" fill="#3B82F6" font-size="9">Firebase SDK</text>
+
+    <!-- Firestore to public QR profile read -->
+    <path d="M 285 405 L 730 310" stroke="#A855F7" stroke-dasharray="3 3" marker-end="url(#arrow-purple)" />
+    <text x="560" y="340" class="flow-label" fill="#A855F7" font-size="9">Sanitized Profile Read</text>
+  </g>
+</svg>
