@@ -2,8 +2,6 @@
   <defs>
     <!-- Web Fonts -->
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&amp;family=Outfit:wght@300;400;600&amp;family=Fira+Code:wght@400;600&amp;display=swap');
-
       /* Base Styles */
       .bg { fill: #070a13; }
       .grid { stroke: rgba(0, 229, 255, 0.05); stroke-width: 1; }
@@ -11,10 +9,10 @@
       .hud-ticks { stroke: rgba(158, 0, 255, 0.25); stroke-width: 1.5; fill: none; stroke-dasharray: 2 12; }
       
       /* Typography */
-      .title { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; fill: #00E5FF; letter-spacing: 2px; }
-      .sub { font-family: 'Outfit', sans-serif; font-weight: 400; font-size: 12px; fill: #94A3B8; }
-      .brand-title { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 26px; fill: #FFFFFF; letter-spacing: 4px; }
-      .brand-sub { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 15px; fill: #38BDF8; letter-spacing: 3px; }
+      .title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 700; font-size: 13px; fill: #00E5FF; letter-spacing: 2px; }
+      .sub { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400; font-size: 12px; fill: #94A3B8; }
+      .brand-title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 900; font-size: 26px; fill: #FFFFFF; letter-spacing: 4px; }
+      .brand-sub { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 300; font-size: 15px; fill: #38BDF8; letter-spacing: 3px; }
       
       /* Glowing Filters */
       .cyan-glow { filter: url(#cyan-glow-filter); }

@@ -1,17 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 350" width="100%" height="100%">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&amp;family=Outfit:wght@300;400;600&amp;display=swap');
-      
       .bg { fill: #070a13; }
       .grid { stroke: rgba(0, 229, 255, 0.04); stroke-width: 1; }
       
       /* Typography */
-      .main-title { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 16px; fill: #FFFFFF; letter-spacing: 2px; }
-      .phase-num { font-family: 'Orbitron', sans-serif; font-weight: 800; font-size: 11px; fill: #00E5FF; }
-      .phase-title { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; fill: #FFFFFF; }
-      .detail-title { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 10px; fill: #CBD5E1; }
-      .detail-desc { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 9.5px; fill: #94A3B8; }
+      .main-title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 800; font-size: 16px; fill: #FFFFFF; letter-spacing: 2px; }
+      .phase-num { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 800; font-size: 11px; fill: #00E5FF; }
+      .phase-title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 700; font-size: 12px; fill: #FFFFFF; }
+      .detail-title { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 10px; fill: #CBD5E1; }
+      .detail-desc { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 300; font-size: 9.5px; fill: #94A3B8; }
       
       /* Shapes styling */
       .timeline-track { stroke: rgba(148, 163, 184, 0.15); stroke-width: 4; fill: none; }
