@@ -59,7 +59,7 @@
   <!-- Main Timeline track line -->
   <path class="timeline-track" d="M 50 170 H 900" />
   <!-- Progress (Showing completed first 3 phases) -->
-  <path class="timeline-progress" d="M 50 170 H 380" class="cyan-glow" />
+  <path class="timeline-progress cyan-glow" d="M 50 170 H 380" />
 
   <!-- ========================================== -->
   <!-- TIMELINE PHASES (Alternating Top/Bottom) -->
@@ -67,7 +67,7 @@
 
   <!-- PHASE 1: Prototype Validation (Top) -->
   <g transform="translate(50, 60)">
-    <rect class="timeline-node theme-cyan" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect class="timeline-node theme-cyan cyan-glow" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" />
     <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
     <text x="10" y="18" class="phase-num">PHASE 1</text>
     <text x="10" y="32" class="phase-title">Validation</text>
@@ -78,7 +78,7 @@
 
   <!-- PHASE 2: Beta Launch (Bottom) -->
   <g transform="translate(160, 180)">
-    <rect class="timeline-node theme-cyan" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect class="timeline-node theme-cyan cyan-glow" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" />
     <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
     <text x="10" y="18" class="phase-num">PHASE 2</text>
     <text x="10" y="32" class="phase-title">Beta Release</text>
@@ -89,7 +89,7 @@
 
   <!-- PHASE 3: Clinical Validation (Top) -->
   <g transform="translate(270, 60)">
-    <rect class="timeline-node theme-cyan" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" class="cyan-glow" />
+    <rect class="timeline-node theme-cyan cyan-glow" x="25" y="95" width="20" height="20" rx="10" fill="#0f172a" />
     <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#00E5FF" stroke-width="1.5" />
     <text x="10" y="18" class="phase-num">PHASE 3</text>
     <text x="10" y="32" class="phase-title">Clinical Study</text>
@@ -100,7 +100,7 @@
 
   <!-- PHASE 4: Medical Certification (Bottom) -->
   <g transform="translate(380, 180)">
-    <rect class="timeline-node theme-purple" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" class="purple-glow" />
+    <rect class="timeline-node theme-purple purple-glow" x="25" y="-25" width="20" height="20" rx="10" fill="#0f172a" />
     <rect x="0" y="0" width="125" height="80" rx="6" fill="#0f172a" stroke="#A855F7" stroke-width="1.5" />
     <text x="10" y="18" class="phase-num" fill="#A855F7">PHASE 4</text>
     <text x="10" y="32" class="phase-title">Certification</text>

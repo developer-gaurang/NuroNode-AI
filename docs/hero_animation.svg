@@ -85,7 +85,7 @@
         15%, 100% { stroke-dashoffset: 0; opacity: 0; }
       }
 
-      /* Mobility Controller Card & Icon */
+      /* Mobility Controller Card and Icon */
       #mob-card {
         animation: highlight-mob 12s infinite ease-in-out;
       }
@@ -109,7 +109,7 @@
         19%, 30% { opacity: 0.8; }
       }
 
-      /* Home Automation Card & Icons */
+      /* Home Automation Card and Icons */
       #home-card {
         animation: highlight-home 12s infinite ease-in-out;
       }
@@ -133,7 +133,7 @@
         54%, 66% { transform: rotate(1440deg); stroke: #00E5FF; }
       }
 
-      /* Dashboard Card & Wave */
+      /* Dashboard Card and Wave */
       #dash-card {
         animation: highlight-dash 12s infinite ease-in-out;
       }
@@ -151,7 +151,7 @@
         76%, 89% { stroke-dashoffset: 0; stroke: #00E5FF; filter: url(#cyan-glow-filter); }
       }
 
-      /* AI & QR Card */
+      /* AI and QR Card */
       #ai-card {
         animation: highlight-ai 12s infinite ease-in-out;
       }

@@ -4,7 +4,7 @@
       .bg { fill: #070a13; }
       .grid { stroke: rgba(0, 229, 255, 0.04); stroke-width: 1; }
       
-      /* Titles & Text */
+      /* Titles and Text */
       .main-title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 800; font-size: 18px; fill: #FFFFFF; letter-spacing: 2px; }
       .layer-title { font-family: 'Orbitron', 'Impact', 'Segoe UI Black', sans-serif; font-weight: 600; font-size: 13px; fill: #38BDF8; letter-spacing: 1px; }
       .node-text { font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 12px; fill: #F1F5F9; }
