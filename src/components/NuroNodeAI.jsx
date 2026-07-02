@@ -40,7 +40,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, 
 
 const MAX_POINTS = 220;
 const QR_VERSION = 'NURONODE-MEDCARD-V1';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')).replace(/\/$/, '');
 const WELLNESS_DISCLAIMER = 'These values are experimental wellness indicators based on eye movement (EOG) signals and are not intended for medical diagnosis.';
 
 const COMMANDS = {
@@ -1031,7 +1031,7 @@ function NuroNodeAI() {
   const connectSerial = useCallback(async () => {
     if (!('serial' in navigator)) {
       setConnectionState('UNSUPPORTED');
-      addLog('Web Serial is not available. Use Chrome or Edge on localhost.', 'danger');
+      addLog('Web Serial is not available. Use Chrome or Edge in a secure browser context.', 'danger');
       return;
     }
 
@@ -1255,6 +1255,9 @@ function NuroNodeAI() {
     setAiLoading(true);
     setAiMessages((prev) => [...prev, { role: 'user', text: question }]);
     try {
+      if (!API_BASE_URL) {
+        throw new Error('Backend API URL is not configured. Set VITE_API_BASE_URL to the Railway backend URL.');
+      }
       const token = await authUser.getIdToken();
       const payload = buildReportPayload();
       const response = await fetch(`${API_BASE_URL}/api/ai/session-summary`, {

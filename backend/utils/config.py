@@ -15,10 +15,16 @@ load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 class Settings:
     def __init__(self) -> None:
         self.app_env = os.getenv("APP_ENV", "development")
-        self.api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+        default_api_base_url = "http://localhost:8000" if self.app_env != "production" else ""
+        default_frontend_origins = (
+            "http://localhost:5173,http://127.0.0.1:5173"
+            if self.app_env != "production"
+            else ""
+        )
+        self.api_base_url = os.getenv("API_BASE_URL", default_api_base_url).rstrip("/")
         self.frontend_origins = os.getenv(
             "FRONTEND_ORIGINS",
-            "http://localhost:5173,http://127.0.0.1:5173",
+            default_frontend_origins,
         )
         self.firebase_project_id = os.getenv("FIREBASE_PROJECT_ID", "")
         self.firebase_storage_bucket = os.getenv("FIREBASE_STORAGE_BUCKET", "nuronode-ai.firebasestorage.app")

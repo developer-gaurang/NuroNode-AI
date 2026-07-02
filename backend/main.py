@@ -40,6 +40,18 @@ def create_app() -> FastAPI:
             "firebase": "configured" if settings.firebase_project_id else "credentials required",
         }
 
+    @app.get("/health", tags=["health"])
+    async def health() -> dict:
+        return {
+            "status": "ok",
+            "environment": settings.app_env,
+            "firebase_project_id": bool(settings.firebase_project_id),
+            "firebase_service_account": bool(settings.firebase_service_account_json or settings.firebase_service_account_file),
+            "firebase_web_api_key": bool(settings.firebase_web_api_key),
+            "gemini": bool(settings.gemini_api_key),
+            "cors_origins": settings.cors_origins,
+        }
+
     return app
 
 

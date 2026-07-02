@@ -4,13 +4,21 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
-  apiKey: 'AIzaSyB1Edbiw9MI6QaIJObP1gYmQASaScDiagA',
-  authDomain: 'nuronode-ai.firebaseapp.com',
-  projectId: 'nuronode-ai',
-  storageBucket: 'nuronode-ai.firebasestorage.app',
-  messagingSenderId: '251788912734',
-  appId: '1:251788912734:web:a56bbb63f536097dcc2ccf',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+const missingFirebaseValues = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingFirebaseValues.length) {
+  throw new Error(`Missing Firebase configuration: ${missingFirebaseValues.join(', ')}`);
+}
 
 export const firebaseApp = initializeApp(firebaseConfig);
 export const auth = getAuth(firebaseApp);
